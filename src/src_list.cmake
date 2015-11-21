@@ -10,4 +10,12 @@ SET(GAME_SRCS
     frontend/scenes/console.h 
     server/platformingcore.cc 
     server/platformingcore.h 
+    shared/tiled/layer.cc 
+    shared/tiled/layer.h 
+    shared/tiled/map.cc 
+    shared/tiled/map.h 
+    shared/tiled/object.cc 
+    shared/tiled/object.h 
+    shared/tiled/tileset.cc 
+    shared/tiled/tileset.h 
 )
