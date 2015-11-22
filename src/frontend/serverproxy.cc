@@ -12,7 +12,7 @@ struct ServerProxyImpl {
 };
 
 std::unique_ptr<tiled::Map> load_map() {
-	return tiled::Map::ReadFromFile("D:/programming/projects/maverick-resources/tiled/mmx1/introstage.json");
+	return tiled::Map::ReadFromFile("mmx1/introstage.json");
 }
 
 ServerProxyImpl::ServerProxyImpl() 
@@ -26,6 +26,10 @@ ServerProxy* ServerProxy::reference() {
 	if (!reference_)
 		reference_.reset(new ServerProxy);
 	return reference_.get();
+}
+
+const tiled::Map* ServerProxy::map() const {
+	return impl_->core_->map();
 }
 
 ServerProxy::ServerProxy() : impl_(new ServerProxyImpl) {}

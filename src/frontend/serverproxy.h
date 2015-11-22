@@ -2,6 +2,7 @@
 #define MAVERICK_FRONTEND_SERVERPROXY_H_
 
 #include <memory>
+#include <tiled-reader/map.h>
 
 namespace frontend {
 
@@ -11,6 +12,7 @@ class ServerProxy {
 public:
 	~ServerProxy();
 	static ServerProxy* reference();
+	const tiled::Map* map() const;
 
 private:
 	ServerProxy();
