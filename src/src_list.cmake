@@ -5,9 +5,11 @@ SET(GAME_SRCS
     frontend/frontend.h 
     frontend/main.cc 
     frontend/nativebuilders.h 
-    frontend/nativebuilders/gamescene.cc 
+    frontend/nativebuilders/gameviewerscene.cc 
     frontend/scenes/console.cc 
     frontend/scenes/console.h 
+    frontend/serverproxy.cc 
+    frontend/serverproxy.h 
     server/platformingcore.cc 
     server/platformingcore.h 
 )

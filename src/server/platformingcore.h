@@ -8,6 +8,8 @@ namespace server {
 
 class PlatformingCore {
 public:
+	PlatformingCore(std::unique_ptr<tiled::Map> map)
+		: map_(std::move(map)) {}
 private:
 	std::unique_ptr<tiled::Map> map_;
 };

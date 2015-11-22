@@ -26,7 +26,7 @@ void Initialize() {
 }
 
 void Start() {
-    ugdk::system::PushSceneFactory(nativebuilders::GameScene);
+    ugdk::system::PushSceneFactory(nativebuilders::GameViewerScene);
 }
 
 } // namespace frontend

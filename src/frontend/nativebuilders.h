@@ -7,7 +7,7 @@
 namespace frontend {
 namespace nativebuilders {
 
-std::unique_ptr<ugdk::action::Scene> GameScene();
+std::unique_ptr<ugdk::action::Scene> GameViewerScene();
 
 } // namespace nativebuilders
 } // namespace frontend
