@@ -1,3 +1,6 @@
 [submodule "externals/ugdk"]
 	path = externals/ugdk
 	url = git://github.com/uspgamedev/ugdk.git
+[submodule "externals/tiled-reader"]
+	path = externals/tiled-reader
+	url = https://github.com/henriquegemignani/tiled-reader.git

@@ -1,7 +1,7 @@
 #ifndef MAVERICK_SERVER_PLATFORMINGCORE_H_
 #define MAVERICK_SERVER_PLATFORMINGCORE_H_
 
-#include <shared/tiled/map.h>
+#include <tiled-reader/map.h>
 #include <memory>
 
 namespace server {
