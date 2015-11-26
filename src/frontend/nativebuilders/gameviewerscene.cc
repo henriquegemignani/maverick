@@ -5,8 +5,14 @@
 #include <ugdk/action/scene.h>
 #include <ugdk/graphic/canvas.h>
 #include <ugdk/graphic/module.h>
+#include <ugdk/graphic/primitive.h>
+#include <ugdk/graphic/textureatlas.h>
+#include <ugdk/graphic/primitivesetup.h>
+#include <ugdk/graphic/sprite.h>
 #include <ugdk/resource/module.h>
 #include <ugdk/ui/drawable/texturedrectangle.h>
+#include <ugdk/input/events.h>
+#include <ugdk/input/module.h>
 #include <tiled-reader/stdiofileloader.h>
 
 namespace frontend {
@@ -33,12 +39,20 @@ std::unique_ptr<ugdk::action::Scene> GameViewerScene() {
 		return t = ugdk::resource::GetTextureFromFile(tiled::StdioFileLoader().GetDirnameOfPath(map->filepath()) + "/" + path);
 	};
 
+	static ugdk::graphic::Primitive player_primitive(nullptr, nullptr);
+	ugdk::graphic::PrimitiveSetup::Sprite::Prepare(player_primitive, ugdk::resource::GetTextureAtlasFromFile("repo"));
+
+	static auto controller = dynamic_cast<ugdk::graphic::PrimitiveControllerSprite*>(player_primitive.controller().get());
+    static size_t current_frame = 0;
+    controller->ChangeToAtlasFrame(current_frame++);
+	//static auto set = ugdk::resource::GetSpriteAnimationTableFromFile("repo.json");
+
 	scene->set_render_function([=](ugdk::graphic::Canvas& canvas) {
 		ugdk::graphic::TextureUnit unit = ugdk::graphic::manager()->ReserveTextureUnit(nullptr);
-		canvas.SendUniform("drawable_texture", unit);
+		ugdk::graphic::TextureUnit sprite_unit = ugdk::graphic::manager()->ReserveTextureUnit(player_primitive.texture());
 		ugdk::graphic::VertexData data(4, sizeof(VertexXYUV), true, true);
 
-		for (const auto& layer : map->layers()) {
+		auto render_layer = [&](const tiled::Layer& layer) {
 			for (int row = 0; row < layer.height(); ++row) {
 				for (int col = 0; col < layer.width(); ++col) {
 					auto tile = layer.tile_at(col, row);
@@ -79,8 +93,24 @@ std::unique_ptr<ugdk::action::Scene> GameViewerScene() {
 					canvas.DrawArrays(ugdk::graphic::DrawMode::TRIANGLE_STRIP(), 0, 4);
 				}
 			}
-		}
+		};
+
+		canvas.SendUniform("drawable_texture", unit);
+		render_layer(map->layers()[0]);
+
+		canvas.SendUniform("drawable_texture", sprite_unit);
+		player_primitive.drawfunction()(player_primitive, canvas);
+
+		canvas.SendUniform("drawable_texture", unit);
+		render_layer(map->layers()[1]);
 	});
+
+    scene->event_handler().AddListener< ugdk::input::KeyPressedEvent >([](const ugdk::input::KeyPressedEvent& ev) {
+        if (ev.scancode == ugdk::input::Scancode::T) {
+            controller->ChangeToAtlasFrame(current_frame++);
+        }
+    });
+
 	return std::move(scene);
 }
 
