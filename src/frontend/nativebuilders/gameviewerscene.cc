@@ -13,6 +13,7 @@
 #include <ugdk/ui/drawable/texturedrectangle.h>
 #include <ugdk/input/events.h>
 #include <ugdk/input/module.h>
+#include <ugdk/input/joystick.h>
 #include <tiled-reader/stdiofileloader.h>
 
 namespace frontend {
@@ -24,6 +25,10 @@ namespace {
 		float x, y, u, v;
 	};
 }
+
+using namespace ugdk;
+
+
 
 std::unique_ptr<ugdk::action::Scene> GameViewerScene() {
 	ServerProxy* server_proxy = ServerProxy::reference();
@@ -46,6 +51,8 @@ std::unique_ptr<ugdk::action::Scene> GameViewerScene() {
     static size_t current_frame = 0;
     controller->ChangeToAtlasFrame(current_frame++);
 	//static auto set = ugdk::resource::GetSpriteAnimationTableFromFile("repo.json");
+
+    static ugdk::math::Vector2D camera, player_position, player_velocity;
 
 	scene->set_render_function([=](ugdk::graphic::Canvas& canvas) {
 		ugdk::graphic::TextureUnit unit = ugdk::graphic::manager()->ReserveTextureUnit(nullptr);
@@ -95,19 +102,73 @@ std::unique_ptr<ugdk::action::Scene> GameViewerScene() {
 			}
 		};
 
+        canvas.PushAndCompose(graphic::Geometry(-camera, math::Vector2D(2.0)));
+
 		canvas.SendUniform("drawable_texture", unit);
 		render_layer(map->layers()[0]);
 
+        canvas.PushAndCompose(graphic::Geometry(player_position));
 		canvas.SendUniform("drawable_texture", sprite_unit);
 		player_primitive.drawfunction()(player_primitive, canvas);
+        canvas.PopGeometry();
 
 		canvas.SendUniform("drawable_texture", unit);
 		render_layer(map->layers()[1]);
+
+        canvas.PopGeometry();
 	});
 
     scene->event_handler().AddListener< ugdk::input::KeyPressedEvent >([](const ugdk::input::KeyPressedEvent& ev) {
         if (ev.scancode == ugdk::input::Scancode::T) {
             controller->ChangeToAtlasFrame(current_frame++);
+        }
+    });
+
+    static bool on_ground = true;
+
+    // 
+    auto axis_func = [](const input::JoystickAxisEvent& ev) {        
+    };
+    auto button_press_func = [](const input::JoystickButtonPressedEvent& ev) {
+        if (ev.button == 11) {
+            if (on_ground) {
+                on_ground = false;
+                player_velocity.y = -256.0;
+            }
+        }
+    };
+    auto button_release_func = [](const input::JoystickButtonReleasedEvent& ev) {
+    };
+
+    auto new_joystick = [=](std::shared_ptr<input::Joystick> joy) {
+        joy->event_handler().AddListener< input::JoystickAxisEvent >(axis_func);
+        joy->event_handler().AddListener< input::JoystickButtonPressedEvent >(button_press_func);
+        joy->event_handler().AddListener< input::JoystickButtonReleasedEvent >(button_release_func);
+    };
+
+    scene->event_handler().AddListener<ugdk::input::JoystickConnectedEvent>([=](const ugdk::input::JoystickConnectedEvent& ev) {
+        new_joystick(ev.joystick.lock());
+    });
+    auto joysticks = ugdk::input::manager()->CurrentJoysticks();
+    if (!joysticks.empty()) {
+        new_joystick(joysticks.front());
+    }
+
+    scene->AddTask([](double dt) {
+        auto joysticks = ugdk::input::manager()->CurrentJoysticks();
+        if (!joysticks.empty()) {
+            auto joystick = joysticks.front();
+            double x_axis = joystick->GetAxisStatus(0).Percentage();
+            if (abs(x_axis) > 0.2)
+                player_position.x += x_axis * 60 * dt;
+        }
+        player_position += player_velocity * dt;
+        player_velocity.y += 512 * dt;
+        player_velocity.y = std::min(player_velocity.y, 512.0);
+        if (player_position.y > 96.0) {
+            player_position.y = 96.0;
+            player_velocity.y = 0.0;
+            on_ground = true;
         }
     });
 
