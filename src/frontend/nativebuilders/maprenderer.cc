@@ -7,6 +7,7 @@
 #include <ugdk/graphic/primitive.h>
 #include <ugdk/graphic/textureatlas.h>
 #include <ugdk/graphic/primitivesetup.h>
+#include <ugdk/graphic/opengl.h>
 #include <ugdk/graphic/sprite.h>
 #include <ugdk/resource/module.h>
 #include <ugdk/ui/drawable/texturedrectangle.h>
@@ -50,19 +51,24 @@ namespace {
     }
 }
 
+MapRenderer::MapRenderer(const tiled::Map* map)
+    : map_(map)
+    , textures_(map->tileset_count(), nullptr)
+{
+    std::string&& dirname = tiled::StdioFileLoader().GetDirnameOfPath(map_->filepath());
+    for (int id = 0; id < textures_.size(); ++id) {
+        textures_[id] = ugdk::resource::GetTextureFromFile(dirname + "/" + map_->tileset(id)->asset_name());
+    }
+}
 
 void MapRenderer::RenderLayers(ugdk::graphic::Canvas & canvas) const
 {
-    static std::unordered_map<std::string, ugdk::graphic::GLTexture*> textures_;
-    auto texture_getter = [=](const std::string& path) {
-        auto& t = textures_[path];
-        if (t) {
-            return t;
-        }
-        return t = ugdk::resource::GetTextureFromFile(tiled::StdioFileLoader().GetDirnameOfPath(map_->filepath()) + "/" + path);
-    };
+    std::vector<ugdk::graphic::TextureUnit> texture_units;
+    texture_units.reserve(textures_.size());
+    for (std::size_t id = 0; id < textures_.size(); ++id) {
+        texture_units.emplace_back(ugdk::graphic::manager()->ReserveTextureUnit(textures_[id]));
+    }
 
-    ugdk::graphic::TextureUnit unit = ugdk::graphic::manager()->ReserveTextureUnit(nullptr);
     ugdk::graphic::VertexData data(4, sizeof(VertexXYUV), true, true);
 
     auto render_layer = [&](const tiled::Layer& layer) {
@@ -71,8 +77,8 @@ void MapRenderer::RenderLayers(ugdk::graphic::Canvas & canvas) const
                 auto tile = layer.tile_at(col, row);
                 if (tile.gid == 0) continue;
                 tiled::TileInfo info = map_->tileinfo_for(tile);
-                unit.BindTexture(texture_getter(info.asset_name));
 
+                canvas.SendUniform("drawable_texture", texture_units[info.tileset->id()]);
                 PopulateVertexDataWithTileInfo(data, info, col, row);
 
                 canvas.SendVertexData(data, ugdk::graphic::VertexType::VERTEX, 0, 2);
@@ -85,7 +91,6 @@ void MapRenderer::RenderLayers(ugdk::graphic::Canvas & canvas) const
     for (const auto& layer : map_->layers()) {
         switch (layer.type()) {
         case tiled::Layer::Type::TileLayer:
-            canvas.SendUniform("drawable_texture", unit);
             render_layer(layer);
             break;
         case tiled::Layer::Type::ObjectGroup:

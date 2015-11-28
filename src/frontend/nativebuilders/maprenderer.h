@@ -3,18 +3,19 @@
 
 #include <tiled-reader/map.h>
 #include <ugdk/graphic.h>
+#include <vector>
 
 namespace frontend {
 
 class MapRenderer {
 public:
-    MapRenderer(const tiled::Map* map)
-		: map_(map) {}
+    MapRenderer(const tiled::Map* map);
 
     void RenderLayers(ugdk::graphic::Canvas& canvas) const;
 
 private:
 	const tiled::Map* map_;
+    std::vector<ugdk::graphic::GLTexture*> textures_;
 };
 
 } // namespace frontend
