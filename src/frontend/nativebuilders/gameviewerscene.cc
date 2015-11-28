@@ -39,13 +39,15 @@ std::unique_ptr<ugdk::action::Scene> GameViewerScene() {
 
     static ugdk::math::Vector2D camera;
 
-    static MapRenderer map_renderer(server_proxy->map());
     static PlayerCharacter player_character;
+
+    static MapRenderer map_renderer(server_proxy->map(), [](ugdk::graphic::Canvas& canvas) {
+        player_character.Render(canvas);
+    });
 
 	scene->set_render_function([=](ugdk::graphic::Canvas& canvas) {
         canvas.PushAndCompose(graphic::Geometry(-camera, math::Vector2D(2.0)));
         map_renderer.RenderLayers(canvas);
-        player_character.Render(canvas);
         canvas.PopGeometry();
 	});
 

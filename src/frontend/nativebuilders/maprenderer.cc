@@ -51,9 +51,11 @@ namespace {
     }
 }
 
-MapRenderer::MapRenderer(const tiled::Map* map)
+MapRenderer::MapRenderer(const tiled::Map* map,
+                         const std::function<void(ugdk::graphic::Canvas& canvas)>& object_layer_drawfunction)
     : map_(map)
     , textures_(map->tileset_count(), nullptr)
+    , object_layer_drawfunction_(object_layer_drawfunction)
 {
     std::string&& dirname = tiled::StdioFileLoader().GetDirnameOfPath(map_->filepath());
     for (int id = 0; id < textures_.size(); ++id) {
@@ -94,7 +96,7 @@ void MapRenderer::RenderLayers(ugdk::graphic::Canvas & canvas) const
             render_layer(layer);
             break;
         case tiled::Layer::Type::ObjectGroup:
-            // FIXME: draw the sprites
+            object_layer_drawfunction_(canvas);
             break;
         case tiled::Layer::Type::ImageLayer:
             throw system::BaseException("Layer::Type::ImageLayer is unsupported");
