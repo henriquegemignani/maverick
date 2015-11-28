@@ -14,13 +14,41 @@
 
 namespace frontend {
 
+using namespace ugdk;
+
 namespace {
     struct VertexXYUV {
         float x, y, u, v;
     };
-}
 
-using namespace ugdk;
+    void PopulateVertexDataWithTileInfo(graphic::VertexData& data, const tiled::TileInfo& info, int col, int row) {
+        ugdk::graphic::VertexData::Mapper mapper(data, false);
+
+        VertexXYUV* v1 = mapper.Get<VertexXYUV>(0);
+        v1->x = col * info.tile_width;
+        v1->y = row * info.tile_height;
+        v1->u = info.p1_u;
+        v1->v = info.p1_v;
+
+        VertexXYUV* v2 = mapper.Get<VertexXYUV>(1);
+        v2->x = v1->x;
+        v2->y = v1->y + info.tile_height;
+        v2->u = info.p1_u;
+        v2->v = info.p2_v;
+
+        VertexXYUV* v3 = mapper.Get<VertexXYUV>(2);
+        v3->x = v1->x + info.tile_width;
+        v3->y = v1->y;
+        v3->u = info.p2_u;
+        v3->v = info.p1_v;
+
+        VertexXYUV* v4 = mapper.Get<VertexXYUV>(3);
+        v4->x = v3->x;
+        v4->y = v2->y;
+        v4->u = info.p2_u;
+        v4->v = info.p2_v;
+    }
+}
 
 
 void MapRenderer::RenderLayers(ugdk::graphic::Canvas & canvas) const
@@ -45,33 +73,7 @@ void MapRenderer::RenderLayers(ugdk::graphic::Canvas & canvas) const
                 tiled::TileInfo info = map_->tileinfo_for(tile);
                 unit.BindTexture(texture_getter(info.asset_name));
 
-                {
-                    ugdk::graphic::VertexData::Mapper mapper(data, false);
-
-                    VertexXYUV* v1 = mapper.Get<VertexXYUV>(0);
-                    v1->x = col * info.tile_width;
-                    v1->y = row * info.tile_height;
-                    v1->u = info.p1_u;
-                    v1->v = info.p1_v;
-
-                    VertexXYUV* v2 = mapper.Get<VertexXYUV>(1);
-                    v2->x = v1->x;
-                    v2->y = v1->y + info.tile_height;
-                    v2->u = info.p1_u;
-                    v2->v = info.p2_v;
-
-                    VertexXYUV* v3 = mapper.Get<VertexXYUV>(2);
-                    v3->x = v1->x + info.tile_width;
-                    v3->y = v1->y;
-                    v3->u = info.p2_u;
-                    v3->v = info.p1_v;
-
-                    VertexXYUV* v4 = mapper.Get<VertexXYUV>(3);
-                    v4->x = v3->x;
-                    v4->y = v2->y;
-                    v4->u = info.p2_u;
-                    v4->v = info.p2_v;
-                }
+                PopulateVertexDataWithTileInfo(data, info, col, row);
 
                 canvas.SendVertexData(data, ugdk::graphic::VertexType::VERTEX, 0, 2);
                 canvas.SendVertexData(data, ugdk::graphic::VertexType::TEXTURE, 2 * sizeof(float), 2);
