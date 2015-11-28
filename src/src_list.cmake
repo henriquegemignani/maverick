@@ -6,6 +6,10 @@ SET(GAME_SRCS
     frontend/main.cc 
     frontend/nativebuilders.h 
     frontend/nativebuilders/gameviewerscene.cc 
+    frontend/nativebuilders/maprenderer.cc 
+    frontend/nativebuilders/maprenderer.h 
+    frontend/nativebuilders/playercharacter.cc 
+    frontend/nativebuilders/playercharacter.h 
     frontend/scenes/console.cc 
     frontend/scenes/console.h 
     frontend/serverproxy.cc 
