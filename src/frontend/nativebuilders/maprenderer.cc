@@ -82,10 +82,20 @@ void MapRenderer::RenderLayers(ugdk::graphic::Canvas & canvas) const
         }
     };
 
-    canvas.SendUniform("drawable_texture", unit);
-    render_layer(map_->layers()[0]);
-
-    canvas.SendUniform("drawable_texture", unit);
-    render_layer(map_->layers()[2]);
+    for (const auto& layer : map_->layers()) {
+        switch (layer.type()) {
+        case tiled::Layer::Type::TileLayer:
+            canvas.SendUniform("drawable_texture", unit);
+            render_layer(layer);
+            break;
+        case tiled::Layer::Type::ObjectGroup:
+            // FIXME: draw the sprites
+            break;
+        case tiled::Layer::Type::ImageLayer:
+            throw system::BaseException("Layer::Type::ImageLayer is unsupported");
+            break;
+        }
+    }
 }
+
 } // namespace frontend
