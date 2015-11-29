@@ -51,13 +51,6 @@ std::unique_ptr<ugdk::action::Scene> GameViewerScene() {
         canvas.PopGeometry();
 	});
 
-    scene->event_handler().AddListener< ugdk::input::KeyPressedEvent >([](const ugdk::input::KeyPressedEvent& ev) {
-        if (ev.scancode == ugdk::input::Scancode::T) {
-            player_character.GoToNextFrame();
-        }
-    });
-
-
     scene->event_handler().AddListener<ugdk::input::JoystickConnectedEvent>([=](const ugdk::input::JoystickConnectedEvent& ev) {
         player_character.HandleNewJoystick(ev.joystick.lock());
     });
