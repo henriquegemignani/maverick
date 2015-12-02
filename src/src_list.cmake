@@ -1,4 +1,6 @@
 SET(GAME_SRCS 
+    backend/ugdktiledfileloader.cc 
+    backend/ugdktiledfileloader.h 
     frontend/debugtools.cc 
     frontend/debugtools.h 
     frontend/frontend.cc 

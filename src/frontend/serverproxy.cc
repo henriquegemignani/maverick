@@ -2,6 +2,8 @@
 #include "frontend/serverproxy.h"
 
 #include "server/platformingcore.h"
+#include "backend/ugdktiledfileloader.h"
+#include <ugdk/filesystem/module.h>
 
 namespace frontend {
 
@@ -12,7 +14,7 @@ struct ServerProxyImpl {
 };
 
 std::unique_ptr<tiled::Map> load_map() {
-	return tiled::Map::ReadFromFile("mmx1/introstage.json");
+	return tiled::Map::ReadFromFile("mmx1/introstage.json", backend::UgdkTiledFileLoader());
 }
 
 ServerProxyImpl::ServerProxyImpl() 
