@@ -1,14 +1,13 @@
-#ifndef MAVERICK_FRONTEND_NATIVEBUILDERS_PLAYERCHARACTER_H_
-#define MAVERICK_FRONTEND_NATIVEBUILDERS_PLAYERCHARACTER_H_
+#ifndef MAVERICK_BACKEND_PLAYERCHARACTER_H_
+#define MAVERICK_BACKEND_PLAYERCHARACTER_H_
 
 #include <memory>
-#include <ugdk/graphic/sprite.h>
-#include <ugdk/graphic/primitive.h>
 #include <ugdk/input/events.h>
 #include <ugdk/system/eventhandler.h>
 #include <ugdk/action/observer.h>
+#include <ugdk/graphic/spritetypes.h>
 
-namespace frontend {
+namespace backend {
 
 class PlayerCharacter 
     : public ugdk::system::Listener<ugdk::input::JoystickDisconnectedEvent>
@@ -27,7 +26,6 @@ public:
     };
 
     void Update(double dt);
-    void Render(ugdk::graphic::Canvas&) const;
 
     void HandleNewJoystick(std::shared_ptr<ugdk::input::Joystick>);
     void Handle(const ugdk::input::JoystickDisconnectedEvent& ev) override;
@@ -36,9 +34,11 @@ public:
     void Handle(const ugdk::input::JoystickButtonReleasedEvent& ev) override;
     void Tick() override;
 
+    double direction() const { return direction_; }
+    const ugdk::math::Vector2D& position() const { return position_; }
+    ugdk::graphic::SpriteAnimationPlayer& player() { return player_; }
+
 private:
-    ugdk::graphic::Primitive primitive_;
-    ugdk::graphic::PrimitiveControllerSprite* controller_;
     ugdk::math::Vector2D position_, velocity_;
     bool on_ground_;
     double direction_;
@@ -47,6 +47,6 @@ private:
     AnimationState state_;
 };
 
-} // namespace frontend
+} // namespace backend
 
-#endif // MAVERICK_FRONTEND_NATIVEBUILDERS_PLAYERCHARACTER_H_
+#endif // MAVERICK_BACKEND_PLAYERCHARACTER_H_

@@ -16,7 +16,7 @@
 #include <ugdk/input/joystick.h>
 #include <tiled-reader/stdiofileloader.h>
 
-#include "frontend/nativebuilders/playercharacter.h"
+#include "frontend/nativebuilders/playercharacterviewer.h"
 #include "frontend/nativebuilders/maprenderer.h"
 
 namespace frontend {
@@ -39,10 +39,11 @@ std::unique_ptr<ugdk::action::Scene> GameViewerScene() {
 
     static ugdk::math::Vector2D camera;
 
-    static PlayerCharacter player_character;
+    static backend::PlayerCharacter player_character;
+    static PlayerCharacterViewer player_character_viewer(&player_character);
 
     static MapRenderer map_renderer(server_proxy->map(), [](ugdk::graphic::Canvas& canvas) {
-        player_character.Render(canvas);
+        player_character_viewer.Render(canvas);
     });
 
 	scene->set_render_function([=](ugdk::graphic::Canvas& canvas) {
