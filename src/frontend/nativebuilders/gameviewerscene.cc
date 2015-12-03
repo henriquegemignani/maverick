@@ -47,7 +47,7 @@ std::unique_ptr<ugdk::action::Scene> GameViewerScene() {
     });
 
 	scene->set_render_function([=](ugdk::graphic::Canvas& canvas) {
-        canvas.PushAndCompose(graphic::Geometry(-camera, math::Vector2D(2.0)));
+        canvas.PushAndCompose(math::Geometry(-camera, math::Vector2D(2.0)));
         map_renderer.RenderLayers(canvas);
         canvas.PopGeometry();
 	});

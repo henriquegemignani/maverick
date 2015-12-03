@@ -5,7 +5,7 @@
 #include <ugdk/input/events.h>
 #include <ugdk/system/eventhandler.h>
 #include <ugdk/action/observer.h>
-#include <ugdk/graphic/spritetypes.h>
+#include <ugdk/action/spritetypes.h>
 
 namespace backend {
 
@@ -36,14 +36,14 @@ public:
 
     double direction() const { return direction_; }
     const ugdk::math::Vector2D& position() const { return position_; }
-    ugdk::graphic::SpriteAnimationPlayer& player() { return player_; }
+    ugdk::action::SpriteAnimationPlayer& player() { return player_; }
 
 private:
     ugdk::math::Vector2D position_, velocity_;
     bool on_ground_;
     double direction_;
     std::weak_ptr<ugdk::input::Joystick> current_joystick_;
-    ugdk::graphic::SpriteAnimationPlayer player_;
+    ugdk::action::SpriteAnimationPlayer player_;
     AnimationState state_;
 };
 

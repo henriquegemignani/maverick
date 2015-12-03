@@ -26,7 +26,7 @@ PlayerCharacterViewer::PlayerCharacterViewer(backend::PlayerCharacter* player_ch
     graphic::PrimitiveSetup::Sprite::Prepare(primitive_, resource::GetTextureAtlasFromFile("repo"));
     controller_ = dynamic_cast<ugdk::graphic::PrimitiveControllerSprite*>(primitive_.controller().get());
 
-    player_character_->player().set_frame_change_callback([this](const ugdk::graphic::SpriteAnimationFrame& frame) {
+    player_character_->player().set_frame_change_callback([this](const ugdk::action::SpriteAnimationFrame& frame) {
         controller_->ChangeToAnimationFrame(frame);
     });
 }
@@ -34,7 +34,7 @@ PlayerCharacterViewer::PlayerCharacterViewer(backend::PlayerCharacter* player_ch
 void PlayerCharacterViewer::Render(ugdk::graphic::Canvas & canvas) const
 {
     ugdk::graphic::TextureUnit sprite_unit = ugdk::graphic::manager()->ReserveTextureUnit(primitive_.texture());
-    canvas.PushAndCompose(graphic::Geometry(player_character_->position(), math::Vector2D(player_character_->direction(), 1.0)));
+    canvas.PushAndCompose(math::Geometry(player_character_->position(), math::Vector2D(player_character_->direction(), 1.0)));
     canvas.PushAndCompose(math::Vector2D(-32, 0));
     canvas.SendUniform("drawable_texture", sprite_unit);
     primitive_.drawfunction()(primitive_, canvas);
