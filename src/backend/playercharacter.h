@@ -22,7 +22,11 @@ public:
     enum class AnimationState {
         WARPING,
         WARP_FINISH,
-        STANDING
+        STANDING,
+        WALKING,
+        ON_AIR,
+        DASHING,
+        WALLSLIDING,
     };
 
     void Update(double dt);
