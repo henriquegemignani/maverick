@@ -26,38 +26,11 @@ PlayerCharacter::PlayerCharacter()
 
 void PlayerCharacter::Update(double dt)
 {
-    if (state_ == AnimationState::STANDING) {
-        if (auto joystick = current_joystick_.lock()) {
-            double x_axis = joystick->GetAxisStatus(0).Percentage();
-            if (abs(x_axis) > 0.2) {
-                direction_ = x_axis / abs(x_axis);
-                position_.x += x_axis * 60 * dt;
-                if (on_ground_) {
-                    player_.Select("walk");
-                }
-            }
-            else {
-                if (on_ground_) {
-                    player_.Select("stand");
-                }
-            }
-        }
-    }
-    position_ += velocity_ * dt;
-    velocity_.y += 512 * dt;
-    velocity_.y = std::min(velocity_.y, 512.0);
-    if (position_.y > 88.0) {
-        position_.y = 88.0;
-        velocity_.y = 0.0;
-        if (!on_ground_ && state_ == AnimationState::STANDING) {
-            //
-        }
-        on_ground_ = true;
-        if (state_ == AnimationState::WARPING) {
-            state_ = AnimationState::WARP_FINISH;
-            player_.Select("warp");
-        }
-    }
+    GetPlayerInput();
+    ApplyGravity(dt);
+    ApplyVelocity(dt);
+    CheckGroundCollision();
+   
     if (!on_ground_ && state_ == AnimationState::STANDING)
     {
         if (velocity_.y < 0)
@@ -93,7 +66,7 @@ void PlayerCharacter::Handle(const ugdk::input::JoystickButtonPressedEvent& ev) 
         if (ev.button == 11) {
             if (on_ground_) {
                 on_ground_ = false;
-                velocity_.y = -320.0;
+                velocity_.y = -5.0 * 60;
             }
         }
     }
@@ -113,6 +86,52 @@ void PlayerCharacter::Tick() {
         break;
     case AnimationState::STANDING:
         break;
+    }
+}
+
+void PlayerCharacter::GetPlayerInput() {
+    if (state_ == AnimationState::STANDING) {
+        if (auto joystick = current_joystick_.lock()) {
+            double x_axis = joystick->GetAxisStatus(0).Percentage();
+            if (abs(x_axis) > 0.2) {
+                direction_ = x_axis / abs(x_axis);
+                velocity_.x = direction_ * 1.5 * 60;
+                if (on_ground_) {
+                    player_.Select("walk");
+                }
+            }
+            else {
+                if (on_ground_) {
+                    player_.Select("stand");
+                }
+            }
+        }
+    }
+}
+
+void PlayerCharacter::ApplyGravity(double dt)
+{
+    velocity_.y += 0.25 * 60 * 60 * dt;
+    velocity_.y = std::min(velocity_.y, 5.75 * 60);
+}
+
+void PlayerCharacter::ApplyVelocity(double dt)
+{
+    position_ += velocity_ * dt;
+}
+
+void PlayerCharacter::CheckGroundCollision() {
+    if (position_.y > 88.0) {
+        position_.y = 88.0;
+        velocity_.y = 0.0;
+        if (!on_ground_ && state_ == AnimationState::STANDING) {
+            //
+        }
+        on_ground_ = true;
+        if (state_ == AnimationState::WARPING) {
+            state_ = AnimationState::WARP_FINISH;
+            player_.Select("warp");
+        }
     }
 }
 

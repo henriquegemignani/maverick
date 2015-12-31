@@ -43,6 +43,11 @@ public:
     ugdk::action::SpriteAnimationPlayer& player() { return player_; }
 
 private:
+    void GetPlayerInput();
+    void ApplyGravity(double dt);
+    void ApplyVelocity(double dt);
+    void CheckGroundCollision();
+
     ugdk::math::Vector2D position_, velocity_;
     bool on_ground_;
     double direction_;
