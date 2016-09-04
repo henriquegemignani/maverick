@@ -21,6 +21,9 @@ class DebugTools :
         if (ev.scancode == input::Scancode::GRAVE && !frontend::scenes::Console::HasConsoleActive()) {
             ugdk::system::PushSceneFactory(&ugdk::MakeUnique<frontend::scenes::Console>);
         }
+	    if (ev.scancode == input::Scancode::ESCAPE) {
+			ugdk::system::CurrentScene().Finish();
+	    }
     }
 };
 
