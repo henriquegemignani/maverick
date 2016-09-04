@@ -101,6 +101,7 @@ void PlayerCharacter::GetPlayerInput() {
                 }
             }
             else {
+				velocity_.x = 0.0;
                 if (on_ground_) {
                     player_.Select("stand");
                 }
