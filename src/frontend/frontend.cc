@@ -14,6 +14,7 @@ namespace frontend {
 void PopuplateUGDKConfiguration(ugdk::system::Configuration& config) {
     //config.canvas_size = settings->resolution_vector();
     config.windows_list[0].title = "Maverick";
+	config.windows_list[0].vsync = true;
     //config.windows_list[0].size = settings->resolution_vector();
     //config.windows_list[0].fullscreen = settings->fullscreen();
 }
