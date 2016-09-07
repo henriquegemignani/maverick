@@ -8,8 +8,9 @@
 #include <ugdk/action/spritetypes.h>
 
 namespace backend {
+	class ServerProxy;
 
-class PlayerCharacter 
+	class PlayerCharacter 
     : public ugdk::system::Listener<ugdk::input::JoystickDisconnectedEvent>
     , public ugdk::system::Listener<ugdk::input::JoystickAxisEvent>
     , public ugdk::system::Listener<ugdk::input::JoystickButtonPressedEvent>
@@ -17,7 +18,7 @@ class PlayerCharacter
     , public ugdk::action::Observer
 {
 public:
-    PlayerCharacter();
+    PlayerCharacter(ServerProxy*);
 
     enum class AnimationState {
         WARPING,
@@ -54,7 +55,8 @@ private:
     std::weak_ptr<ugdk::input::Joystick> current_joystick_;
     ugdk::action::SpriteAnimationPlayer player_;
     AnimationState state_;
-};
+	ServerProxy* server_;
+	};
 
 } // namespace backend
 

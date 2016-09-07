@@ -39,7 +39,7 @@ std::unique_ptr<ugdk::action::Scene> GameViewerScene() {
 
     static ugdk::math::Vector2D camera;
 
-    static backend::PlayerCharacter player_character;
+    static backend::PlayerCharacter player_character(server_proxy);
     static PlayerCharacterViewer player_character_viewer(&player_character);
 
     static MapRenderer map_renderer(server_proxy->map(), [](ugdk::graphic::Canvas& canvas) {

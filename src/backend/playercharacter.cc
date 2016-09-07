@@ -12,11 +12,12 @@ namespace backend {
   
 using namespace ugdk;
 
-PlayerCharacter::PlayerCharacter()
+PlayerCharacter::PlayerCharacter(ServerProxy* server)
     : position_(64.0, -16.0)
     , on_ground_(false)
     , direction_(1.0)
     , player_(ugdk::resource::GetSpriteAnimationTableFromFile("x.json"))
+	, server_(server)
 {
     player_.AddObserver(this);
     player_.Select("warpin");
@@ -86,6 +87,8 @@ void PlayerCharacter::Tick() {
         break;
     case AnimationState::STANDING:
         break;
+	default:
+		break;
     }
 }
 
