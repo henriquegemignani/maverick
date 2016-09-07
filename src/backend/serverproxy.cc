@@ -1,11 +1,11 @@
 
-#include "frontend/serverproxy.h"
+#include "backend/serverproxy.h"
 
 #include "server/platformingcore.h"
 #include "backend/ugdktiledfileloader.h"
 #include <ugdk/filesystem/module.h>
 
-namespace frontend {
+namespace backend {
 
 struct ServerProxyImpl {
 	ServerProxyImpl();

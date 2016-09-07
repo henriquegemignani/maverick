@@ -4,7 +4,7 @@
 #include <memory>
 #include <tiled-reader/map.h>
 
-namespace frontend {
+namespace backend {
 
 struct ServerProxyImpl;
 

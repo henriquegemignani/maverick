@@ -1,6 +1,8 @@
 SET(GAME_SRCS 
     backend/playercharacter.cc 
     backend/playercharacter.h 
+    backend/serverproxy.cc 
+    backend/serverproxy.h 
     backend/ugdktiledfileloader.cc 
     backend/ugdktiledfileloader.h 
     frontend/debugtools.cc 
@@ -16,8 +18,6 @@ SET(GAME_SRCS
     frontend/nativebuilders/playercharacterviewer.h 
     frontend/scenes/console.cc 
     frontend/scenes/console.h 
-    frontend/serverproxy.cc 
-    frontend/serverproxy.h 
     server/platformingcore.cc 
     server/platformingcore.h 
 )

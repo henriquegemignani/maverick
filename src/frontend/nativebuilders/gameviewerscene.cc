@@ -1,7 +1,6 @@
 
 #include "frontend/nativebuilders.h"
 
-#include "frontend/serverproxy.h"
 #include <ugdk/action/scene.h>
 #include <ugdk/graphic/canvas.h>
 #include <ugdk/graphic/module.h>
@@ -16,6 +15,7 @@
 #include <ugdk/input/joystick.h>
 #include <tiled-reader/stdiofileloader.h>
 
+#include "backend/serverproxy.h"
 #include "frontend/nativebuilders/playercharacterviewer.h"
 #include "frontend/nativebuilders/maprenderer.h"
 
@@ -34,7 +34,7 @@ using namespace ugdk;
 
 
 std::unique_ptr<ugdk::action::Scene> GameViewerScene() {
-	ServerProxy* server_proxy = ServerProxy::reference();
+	auto server_proxy = backend::ServerProxy::reference();
 	auto scene = std::make_unique<ugdk::action::Scene>();
 
     static ugdk::math::Vector2D camera;
