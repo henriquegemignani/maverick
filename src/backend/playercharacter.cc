@@ -8,12 +8,15 @@
 #include <ugdk/input/joystick.h>
 #include <algorithm>
 
+#include "backend/serverproxy.h"
+
 namespace backend {
   
 using namespace ugdk;
 
 PlayerCharacter::PlayerCharacter(ServerProxy* server)
     : position_(64.0, -16.0)
+	, was_on_ground_(false)
     , on_ground_(false)
     , direction_(1.0)
     , player_(ugdk::resource::GetSpriteAnimationTableFromFile("x.json"))
@@ -27,10 +30,11 @@ PlayerCharacter::PlayerCharacter(ServerProxy* server)
 
 void PlayerCharacter::Update(double dt)
 {
+	was_on_ground_ = on_ground_;
     GetPlayerInput();
     ApplyGravity(dt);
     ApplyVelocity(dt);
-    CheckGroundCollision();
+    CheckCollision();
    
     if (!on_ground_ && state_ == AnimationState::STANDING)
     {
@@ -121,10 +125,21 @@ void PlayerCharacter::ApplyGravity(double dt)
 
 void PlayerCharacter::ApplyVelocity(double dt)
 {
-    position_ += velocity_ * dt;
+	position_.x += velocity_.x * dt;
+	CheckCollision();
+	position_.y += velocity_.y * dt;
+	CheckCollision();
 }
 
-void PlayerCharacter::CheckGroundCollision() {
+void PlayerCharacter::CheckCollision() {
+	auto map = server_->map();
+	auto& layer = map->layers()[2];
+	
+	int tile_col = static_cast<int>(position_.x / map->tile_width());
+	int tile_row = static_cast<int>(position_.y / map->tile_height());
+	auto tile = layer.tile_at(tile_col, tile_row);
+	tiled::TileInfo info = map->tileinfo_for(tile);
+
     if (position_.y > 88.0) {
         position_.y = 88.0;
         velocity_.y = 0.0;

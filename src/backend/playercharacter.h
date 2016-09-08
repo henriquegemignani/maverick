@@ -47,7 +47,7 @@ private:
     void GetPlayerInput();
     void ApplyGravity(double dt);
     void ApplyVelocity(double dt);
-    void CheckGroundCollision();
+    void CheckCollision();
 
     ugdk::math::Vector2D position_, velocity_;
     bool on_ground_;
@@ -56,6 +56,7 @@ private:
     ugdk::action::SpriteAnimationPlayer player_;
     AnimationState state_;
 	ServerProxy* server_;
+		bool was_on_ground_;
 	};
 
 } // namespace backend
