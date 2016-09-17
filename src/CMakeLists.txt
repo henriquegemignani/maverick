@@ -17,7 +17,8 @@ if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
         -Wno-deprecated-register
     )
 endif ()
-if (MSVC) 
+if (MSVC)
+    add_definitions(/ZI)
     add_definitions(/D_CRT_SECURE_NO_WARNINGS /W4 /wd4100 /wd4127 /wd4201 /wd4211 /wd4250 /wd4706 /fp:fast /MP)
     # SSE2 is automatic in amd64
     IF(NOT CMAKE_SIZEOF_VOID_P EQUAL 8)

@@ -45,8 +45,8 @@ public:
 
 private:
     void GetPlayerInput();
-    void ApplyGravity(double dt);
-    void ApplyVelocity(double dt);
+    void ApplyGravity();
+    void ApplyVelocity();
     void CheckCollision();
 
     ugdk::math::Vector2D position_, velocity_;

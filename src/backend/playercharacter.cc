@@ -14,6 +14,16 @@ namespace backend {
   
 using namespace ugdk;
 
+namespace {
+	bool get_bool_property(const tiled::PropertyMap& map, const std::string& name) {
+		auto f = map.find(name);
+		if (f != map.end()) {
+			return f->second.bool_value();	
+		}
+		return false;
+	}
+}
+
 PlayerCharacter::PlayerCharacter(ServerProxy* server)
     : position_(64.0, -16.0)
 	, was_on_ground_(false)
@@ -32,8 +42,8 @@ void PlayerCharacter::Update(double dt)
 {
 	was_on_ground_ = on_ground_;
     GetPlayerInput();
-    ApplyGravity(dt);
-    ApplyVelocity(dt);
+    ApplyGravity();
+    ApplyVelocity();
     CheckCollision();
    
     if (!on_ground_ && state_ == AnimationState::STANDING)
@@ -71,7 +81,7 @@ void PlayerCharacter::Handle(const ugdk::input::JoystickButtonPressedEvent& ev) 
         if (ev.button == 11) {
             if (on_ground_) {
                 on_ground_ = false;
-                velocity_.y = -5.0 * 60;
+                velocity_.y = -5.0;
             }
         }
     }
@@ -116,13 +126,13 @@ void PlayerCharacter::GetPlayerInput() {
 			{
 				if (on_ground_) {
 					on_ground_ = false;
-					velocity_.y = -5.0 * 60;
+					velocity_.y = -5.0;
 				}
 			}
         }
 		if (abs(x_axis) > 0.2) {
 			direction_ = x_axis / abs(x_axis);
-			velocity_.x = direction_ * 1.5 * 60;
+			velocity_.x = direction_ * 1.5;
 			if (on_ground_) {
 				player_.Select("walk");
 			}
@@ -136,41 +146,43 @@ void PlayerCharacter::GetPlayerInput() {
     }
 }
 
-void PlayerCharacter::ApplyGravity(double dt)
+void PlayerCharacter::ApplyGravity()
 {
-    velocity_.y += 0.25 * 60 * 60 * dt;
-    velocity_.y = std::min(velocity_.y, 5.75 * 60);
+    velocity_.y += 0.25;
+    velocity_.y = std::min(velocity_.y, 5.75);
 }
 
-void PlayerCharacter::ApplyVelocity(double dt)
+void PlayerCharacter::ApplyVelocity()
 {
-	position_.x += velocity_.x * dt;
+	position_.x += velocity_.x / 60;
 	CheckCollision();
-	position_.y += velocity_.y * dt;
+	position_.y += velocity_.y / 60;
 	CheckCollision();
 }
 
 void PlayerCharacter::CheckCollision() {
 	auto map = server_->map();
-	auto& layer = map->layers()[2];
+	auto& layer = map->layers()[4];
 	
 	int tile_col = static_cast<int>(position_.x / map->tile_width());
 	int tile_row = static_cast<int>(position_.y / map->tile_height());
-	auto tile = layer.tile_at(tile_col, tile_row);
-	tiled::TileInfo info = map->tileinfo_for(tile);
-
-    if (position_.y > 88.0) {
-        position_.y = 88.0;
-        velocity_.y = 0.0;
-        if (!on_ground_ && state_ == AnimationState::STANDING) {
-            //
-        }
-        on_ground_ = true;
-        if (state_ == AnimationState::WARPING) {
-            state_ = AnimationState::WARP_FINISH;
-            player_.Select("warp");
-        }
-    }
+	if (layer.IsInside(tile_col, tile_row))
+	{
+		auto tile = layer.tile_at(tile_col, tile_row);
+		auto& properties = map->tileproperties_for(tile);
+		if (get_bool_property(properties, "solid")) {
+			position_.y = 88.0;
+			velocity_.y = 0.0;
+			if (!on_ground_ && state_ == AnimationState::STANDING) {
+				//
+			}
+			on_ground_ = true;
+			if (state_ == AnimationState::WARPING) {
+				state_ = AnimationState::WARP_FINISH;
+				player_.Select("warp");
+			}
+		}
+	}
 }
 
 } // namespace frontend
