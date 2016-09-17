@@ -37,6 +37,9 @@ add_definitions(-DEMBBEDED_UGDK="${CMAKE_CURRENT_BINARY_DIR}/externals/ugdk")
 add_subdirectory(externals/ugdk EXCLUDE_FROM_ALL)
 include_directories(${UGDK_EXTERNAL_INCLUDE_DIRS})
 
+set(MAVERICK_DATA_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../maverick-data" CACHE STRING "Where the data is located.")
+add_definitions(-DMAVERICK_DATA_PATH="${MAVERICK_DATA_PATH}")
+
 # The tiled reader
 add_subdirectory(externals/tiled-reader EXCLUDE_FROM_ALL)
 
