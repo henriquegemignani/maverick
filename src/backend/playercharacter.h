@@ -56,8 +56,9 @@ private:
     ugdk::action::SpriteAnimationPlayer player_;
     AnimationState state_;
 	ServerProxy* server_;
-		bool was_on_ground_;
-	};
+	bool was_on_ground_;
+	double width_;
+};
 
 } // namespace backend
 
