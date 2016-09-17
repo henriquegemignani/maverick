@@ -26,29 +26,29 @@ namespace {
     void PopulateVertexDataWithTileInfo(graphic::VertexData& data, const tiled::TileInfo& info, int col, int row) {
         ugdk::graphic::VertexData::Mapper mapper(data, false);
 
-        VertexXYUV* v1 = mapper.Get<VertexXYUV>(0);
+        VertexXYUV* v1 = mapper.Get<VertexXYUV>(0); // top left
         v1->x = col * info.tile_width;
         v1->y = row * info.tile_height;
-        v1->u = info.p1_u;
-        v1->v = info.p1_v;
+		v1->u = info.top_left.u;
+		v1->v = info.top_left.v;
 
-        VertexXYUV* v2 = mapper.Get<VertexXYUV>(1);
+        VertexXYUV* v2 = mapper.Get<VertexXYUV>(1); // bot left
         v2->x = v1->x;
         v2->y = v1->y + info.tile_height;
-        v2->u = info.p1_u;
-        v2->v = info.p2_v;
+		v2->u = info.bot_left.u;
+		v2->v = info.bot_left.v;
 
-        VertexXYUV* v3 = mapper.Get<VertexXYUV>(2);
+        VertexXYUV* v3 = mapper.Get<VertexXYUV>(2); // top right
         v3->x = v1->x + info.tile_width;
         v3->y = v1->y;
-        v3->u = info.p2_u;
-        v3->v = info.p1_v;
+		v3->u = info.top_right.u;
+		v3->v = info.top_right.v;
 
-        VertexXYUV* v4 = mapper.Get<VertexXYUV>(3);
+        VertexXYUV* v4 = mapper.Get<VertexXYUV>(3); // bot right
         v4->x = v3->x;
         v4->y = v2->y;
-        v4->u = info.p2_u;
-        v4->v = info.p2_v;
+		v4->u = info.bot_right.u;
+		v4->v = info.bot_right.v;
     }
 }
 
