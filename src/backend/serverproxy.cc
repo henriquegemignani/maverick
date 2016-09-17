@@ -14,7 +14,7 @@ struct ServerProxyImpl {
 };
 
 std::unique_ptr<tiled::Map> load_map() {
-	return tiled::Map::ReadFromFile("mmx1/introstage.json", backend::UgdkTiledFileLoader());
+	return tiled::Map::ReadFromFile("mmx1/introstage/map.json", backend::UgdkTiledFileLoader());
 }
 
 ServerProxyImpl::ServerProxyImpl() 

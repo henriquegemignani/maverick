@@ -10,6 +10,7 @@
 #include <ugdk/graphic/opengl.h>
 #include <ugdk/graphic/sprite.h>
 #include <ugdk/resource/module.h>
+#include <ugdk/math/frame.h>
 #include <ugdk/ui/drawable/texturedrectangle.h>
 #include <tiled-reader/stdiofileloader.h>
 
@@ -52,7 +53,7 @@ namespace {
 }
 
 MapRenderer::MapRenderer(const tiled::Map* map,
-                         const std::function<void(ugdk::graphic::Canvas& canvas)>& object_layer_drawfunction)
+                         const DrawFunction& object_layer_drawfunction)
     : map_(map)
     , textures_(map->tileset_count(), nullptr)
     , object_layer_drawfunction_(object_layer_drawfunction)
@@ -63,7 +64,7 @@ MapRenderer::MapRenderer(const tiled::Map* map,
     }
 }
 
-void MapRenderer::RenderLayers(ugdk::graphic::Canvas & canvas) const
+void MapRenderer::RenderLayers(ugdk::graphic::Canvas & canvas, const ugdk::math::Frame& view) const
 {
     std::vector<ugdk::graphic::TextureUnit> texture_units;
     texture_units.reserve(textures_.size());
@@ -73,9 +74,16 @@ void MapRenderer::RenderLayers(ugdk::graphic::Canvas & canvas) const
 
     ugdk::graphic::VertexData data(4, sizeof(VertexXYUV), true, true);
 
+	int first_col = static_cast<int>(std::floor(view.left() / map_->tile_width()));
+	int last_col = static_cast<int>(std::ceil((view.right()) / map_->tile_width()));
+	int first_row = static_cast<int>(std::floor(view.top() / map_->tile_height()));
+	int last_row = static_cast<int>(std::ceil((view.bottom()) / map_->tile_height()));
+
     auto render_layer = [&](const tiled::Layer& layer) {
-        for (int row = 0; row < layer.height(); ++row) {
-            for (int col = 0; col < layer.width(); ++col) {
+		int target_height = std::min(layer.height() - 1, last_row);
+		int target_width = std::min(layer.width() - 1, last_col);
+        for (int row = first_row; row <= target_height; ++row) {
+            for (int col = first_col; col <= target_width; ++col) {
                 auto tile = layer.tile_at(col, row);
                 if (tile.gid == 0) continue;
                 tiled::TileInfo info = map_->tileinfo_for(tile);
@@ -96,7 +104,7 @@ void MapRenderer::RenderLayers(ugdk::graphic::Canvas & canvas) const
             render_layer(layer);
             break;
         case tiled::Layer::Type::ObjectGroup:
-            object_layer_drawfunction_(canvas);
+            object_layer_drawfunction_(canvas, view);
             break;
         case tiled::Layer::Type::ImageLayer:
             throw system::BaseException("Layer::Type::ImageLayer is unsupported");

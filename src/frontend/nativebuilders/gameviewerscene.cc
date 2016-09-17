@@ -13,6 +13,7 @@
 #include <ugdk/input/events.h>
 #include <ugdk/input/module.h>
 #include <ugdk/input/joystick.h>
+#include <ugdk/math/frame.h>
 #include <tiled-reader/stdiofileloader.h>
 
 #include "backend/serverproxy.h"
@@ -42,13 +43,14 @@ std::unique_ptr<ugdk::action::Scene> GameViewerScene() {
     static backend::PlayerCharacter player_character(server_proxy);
     static PlayerCharacterViewer player_character_viewer(&player_character);
 
-    static MapRenderer map_renderer(server_proxy->map(), [](ugdk::graphic::Canvas& canvas) {
+    static MapRenderer map_renderer(server_proxy->map(), [](ugdk::graphic::Canvas& canvas, const ugdk::math::Frame& view) {
         player_character_viewer.Render(canvas);
     });
 
 	scene->set_render_function([=](ugdk::graphic::Canvas& canvas) {
         canvas.PushAndCompose(math::Geometry(-camera, math::Vector2D(2.0)));
-        map_renderer.RenderLayers(canvas);
+		auto actual_size = canvas.size() * 0.5;
+        map_renderer.RenderLayers(canvas, ugdk::math::Frame(camera.x, camera.y, camera.x + actual_size.x, camera.y + actual_size.y));
         canvas.PopGeometry();
 	});
 
