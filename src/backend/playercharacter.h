@@ -28,6 +28,7 @@ public:
         ON_AIR,
         DASHING,
         WALLSLIDING,
+		WALLKICKING,
     };
 
     void Update(double dt);
@@ -42,22 +43,29 @@ public:
     double direction() const { return direction_; }
     const ugdk::math::Vector2D& position() const { return position_; }
     ugdk::action::SpriteAnimationPlayer& player() { return player_; }
+	bool on_ground() const;
+	bool IsAcceptingMovementInput() const;
 
 private:
     void GetPlayerInput();
     void ApplyGravity();
     void ApplyVelocity();
-    void CheckCollision(bool vertical);
+	void UpdateAnimation();
+	void Jump();
+	void Land();
 
     ugdk::math::Vector2D position_, velocity_;
     bool on_ground_;
-    double direction_;
+	bool on_wall_;
+    int direction_;
     std::weak_ptr<ugdk::input::Joystick> current_joystick_;
     ugdk::action::SpriteAnimationPlayer player_;
     AnimationState state_;
 	ServerProxy* server_;
 	bool was_on_ground_;
 	double width_;
+	double input_x_axis_;
+	bool should_jump_;
 };
 
 } // namespace backend
