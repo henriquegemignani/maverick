@@ -50,7 +50,8 @@ std::unique_ptr<ugdk::action::Scene> GameViewerScene() {
 	scene->set_render_function([=](ugdk::graphic::Canvas& canvas) {
         canvas.PushAndCompose(math::Geometry(-camera, math::Vector2D(2.0)));
 		auto actual_size = canvas.size() * 0.5;
-        map_renderer.RenderLayers(canvas, ugdk::math::Frame(camera.x, camera.y, camera.x + actual_size.x, camera.y + actual_size.y));
+		auto left_corner = camera * 0.5;
+        map_renderer.RenderLayers(canvas, ugdk::math::Frame(left_corner.x, left_corner.y, left_corner.x + actual_size.x, left_corner.y + actual_size.y));
         canvas.PopGeometry();
 	});
 
@@ -64,6 +65,7 @@ std::unique_ptr<ugdk::action::Scene> GameViewerScene() {
 
     scene->AddTask([](double dt) {
         player_character.Update(dt);
+		camera.x = std::floor(player_character.position().x * 2 - 400.0);
     });
 
 	return std::move(scene);

@@ -74,9 +74,9 @@ void MapRenderer::RenderLayers(ugdk::graphic::Canvas & canvas, const ugdk::math:
 
     ugdk::graphic::VertexData data(4, sizeof(VertexXYUV), true, true);
 
-	int first_col = static_cast<int>(std::floor(view.left() / map_->tile_width()));
+	int first_col = std::max(0, static_cast<int>(std::floor(view.left() / map_->tile_width())));
 	int last_col = static_cast<int>(std::ceil((view.right()) / map_->tile_width()));
-	int first_row = static_cast<int>(std::floor(view.top() / map_->tile_height()));
+	int first_row = std::max(0, static_cast<int>(std::floor(view.top() / map_->tile_height())));
 	int last_row = static_cast<int>(std::ceil((view.bottom()) / map_->tile_height()));
 
     auto render_layer = [&](const tiled::Layer& layer) {

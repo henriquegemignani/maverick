@@ -98,22 +98,41 @@ void PlayerCharacter::Tick() {
 
 void PlayerCharacter::GetPlayerInput() {
     if (state_ == AnimationState::STANDING) {
+		double x_axis = 0.0;
         if (auto joystick = current_joystick_.lock()) {
-            double x_axis = joystick->GetAxisStatus(0).Percentage();
-            if (abs(x_axis) > 0.2) {
-                direction_ = x_axis / abs(x_axis);
-                velocity_.x = direction_ * 1.5 * 60;
-                if (on_ground_) {
-                    player_.Select("walk");
-                }
-            }
-            else {
-				velocity_.x = 0.0;
-                if (on_ground_) {
-                    player_.Select("stand");
-                }
-            }
+            x_axis = joystick->GetAxisStatus(0).Percentage();
+        } else
+        {
+			const auto& keyboard = ugdk::input::manager()->keyboard();
+			if (keyboard.IsDown(input::Scancode::D)) {
+				x_axis = 1.0;
+			} else if (keyboard.IsDown(input::Scancode::A)) {
+				x_axis = -1.0;
+			} else {
+				x_axis = 0.0;
+			}
+
+			if (keyboard.IsPressed(input::Scancode::SPACE))
+			{
+				if (on_ground_) {
+					on_ground_ = false;
+					velocity_.y = -5.0 * 60;
+				}
+			}
         }
+		if (abs(x_axis) > 0.2) {
+			direction_ = x_axis / abs(x_axis);
+			velocity_.x = direction_ * 1.5 * 60;
+			if (on_ground_) {
+				player_.Select("walk");
+			}
+		}
+		else {
+			velocity_.x = 0.0;
+			if (on_ground_) {
+				player_.Select("stand");
+			}
+		}
     }
 }
 
