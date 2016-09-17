@@ -80,6 +80,9 @@ void MapRenderer::RenderLayers(ugdk::graphic::Canvas & canvas, const ugdk::math:
 	int last_row = static_cast<int>(std::ceil((view.bottom()) / map_->tile_height()));
 
     auto render_layer = [&](const tiled::Layer& layer) {
+
+		const tiled::Tileset* last_tile_set = nullptr;
+
 		int target_height = std::min(layer.height() - 1, last_row);
 		int target_width = std::min(layer.width() - 1, last_col);
         for (int row = first_row; row <= target_height; ++row) {
@@ -88,7 +91,10 @@ void MapRenderer::RenderLayers(ugdk::graphic::Canvas & canvas, const ugdk::math:
                 if (tile.gid == 0) continue;
                 tiled::TileInfo info = map_->tileinfo_for(tile);
 
-                canvas.SendUniform("drawable_texture", texture_units[info.tileset->id()]);
+				if (last_tile_set != info.tileset) {
+					last_tile_set = info.tileset;
+					canvas.SendUniform("drawable_texture", texture_units[last_tile_set->id()]);
+				}
                 PopulateVertexDataWithTileInfo(data, info, col, row);
 
                 canvas.SendVertexData(data, ugdk::graphic::VertexType::VERTEX, 0, 2);

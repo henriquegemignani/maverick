@@ -44,7 +44,6 @@ void PlayerCharacter::Update(double dt)
     GetPlayerInput();
     ApplyGravity();
     ApplyVelocity();
-    CheckCollision();
    
     if (!on_ground_ && state_ == AnimationState::STANDING)
     {
@@ -154,15 +153,17 @@ void PlayerCharacter::ApplyGravity()
 
 void PlayerCharacter::ApplyVelocity()
 {
-	position_.x += velocity_.x / 60;
-	CheckCollision();
-	position_.y += velocity_.y / 60;
-	CheckCollision();
+	position_.x += velocity_.x;
+	CheckCollision(false);
+	position_.y += velocity_.y;
+	CheckCollision(true);
 }
 
-void PlayerCharacter::CheckCollision() {
+void PlayerCharacter::CheckCollision(bool vertical) {
 	auto map = server_->map();
-	auto& layer = map->layers()[4];
+	auto& layer = map->layers()[0];
+
+	if (!vertical) return;
 	
 	int tile_col = static_cast<int>(position_.x / map->tile_width());
 	int tile_row = static_cast<int>(position_.y / map->tile_height());
@@ -171,7 +172,7 @@ void PlayerCharacter::CheckCollision() {
 		auto tile = layer.tile_at(tile_col, tile_row);
 		auto& properties = map->tileproperties_for(tile);
 		if (get_bool_property(properties, "solid")) {
-			position_.y = 88.0;
+			position_.y = tile_row * map->tile_height();
 			velocity_.y = 0.0;
 			if (!on_ground_ && state_ == AnimationState::STANDING) {
 				//

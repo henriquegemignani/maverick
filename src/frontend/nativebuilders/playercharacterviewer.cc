@@ -35,7 +35,7 @@ void PlayerCharacterViewer::Render(ugdk::graphic::Canvas & canvas) const
 {
     ugdk::graphic::TextureUnit sprite_unit = ugdk::graphic::manager()->ReserveTextureUnit(primitive_.texture());
     canvas.PushAndCompose(math::Geometry(player_character_->position(), math::Vector2D(player_character_->direction(), 1.0)));
-    canvas.PushAndCompose(math::Vector2D(-32, 0));
+    canvas.PushAndCompose(math::Vector2D(-32, -56.0));
     canvas.SendUniform("drawable_texture", sprite_unit);
     primitive_.drawfunction()(primitive_, canvas);
     canvas.PopGeometry();
