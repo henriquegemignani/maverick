@@ -44,17 +44,20 @@ public:
     const ugdk::math::Vector2D& position() const { return position_; }
     ugdk::action::SpriteAnimationPlayer& player() { return player_; }
 	bool on_ground() const;
-	bool IsAcceptingMovementInput() const;
 
 private:
+    // Update body
     void GetPlayerInput();
+    void Move();
+    void Dash();
+    void Jump();
+    void Shoot();
     void ApplyGravity();
     void ApplyVelocity();
-	void UpdateAnimation();
-	void Jump();
-	void Dash();
-    void Shoot();
-	void Land();
+    void UpdateAnimation();
+
+    // 
+    void Land();
 
     void ChangeAnimation(const std::string&);
 

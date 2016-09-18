@@ -109,34 +109,48 @@ void PlayerCharacter::Shoot() {
     }
 }
 
+void PlayerCharacter::Move() {
+    switch (state_) {
+    case AnimationState::DASHING:
+        if (std::abs(input_x_axis_) > 0.2 && sgn(input_x_axis_) != direction_)
+            state_ = AnimationState::WALKING;
+        else
+            break;
+        // no break on purpose
+
+    case AnimationState::STANDING:
+    case AnimationState::WALKING:
+    case AnimationState::ON_AIR:
+    case AnimationState::WALLSLIDING:
+        if (std::abs(input_x_axis_) > 0.2) {
+            direction_ = sgn(input_x_axis_);
+            velocity_.x = direction_ * kWalkingSpeed;
+            if (state_ == AnimationState::STANDING) {
+                show_pre_walk_ = true;
+                state_ = AnimationState::WALKING;
+            }
+        } else {
+            velocity_.x = 0.0;
+            if (state_ == AnimationState::WALKING)
+                state_ = AnimationState::STANDING;
+        }
+        break;
+
+    case AnimationState::WARPING:
+    case AnimationState::WARP_FINISH:
+    case AnimationState::WALLKICKING:
+    default:
+        break;
+    }
+}
+
 void PlayerCharacter::Update(double dt)
 {
     GetPlayerInput();
-
-    if (state_ == AnimationState::DASHING) {
-        if (std::abs(input_x_axis_) > 0.2 && sgn(input_x_axis_) != direction_)
-            state_ = AnimationState::WALKING;
-    }
-
-	if (IsAcceptingMovementInput()) {
-		if (std::abs(input_x_axis_) > 0.2) {
-			direction_ = sgn(input_x_axis_);
-			velocity_.x = direction_ * kWalkingSpeed;
-			if (state_ == AnimationState::STANDING) {
-				show_pre_walk_ = true;
-				state_ = AnimationState::WALKING;
-			}
-		} else {
-			velocity_.x = 0.0;
-			if (state_ == AnimationState::WALKING)
-				state_ = AnimationState::STANDING;
-		}
-	}
-
-	Dash();
+    Move();
+    Dash();
 	Jump();
     Shoot();
-
     ApplyGravity();
     ApplyVelocity();
 	UpdateAnimation();
@@ -450,25 +464,6 @@ bool PlayerCharacter::on_ground() const
 	default:
 		return false;
 		break;
-	}
-}
-
-bool PlayerCharacter::IsAcceptingMovementInput() const
-{
-	switch (state_)
-	{
-	case AnimationState::STANDING:
-	case AnimationState::WALKING:
-	case AnimationState::ON_AIR:
-	case AnimationState::WALLSLIDING:
-		return true;
-
-	case AnimationState::WARPING:
-	case AnimationState::WARP_FINISH:
-	case AnimationState::DASHING:
-	case AnimationState::WALLKICKING:
-	default:
-		return false;
 	}
 }
 
