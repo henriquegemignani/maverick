@@ -133,11 +133,6 @@ void PlayerCharacter::Update(double dt)
 		}
 	}
 
-    if (state_ == AnimationState::ON_AIR) {
-        if (velocity_.y < 0.0 && !holding_jump_)
-            velocity_.y = 0.0;
-    }
-
 	Dash();
 	Jump();
     Shoot();
@@ -306,28 +301,35 @@ void PlayerCharacter::ApplyVelocity()
 }
 
 void PlayerCharacter::Jump() {
-	if (!should_jump_) return;
-	should_jump_ = false;
-
 	switch(state_)
 	{
 	case AnimationState::STANDING:
 	case AnimationState::WALKING:
 	case AnimationState::DASHING:
-		state_ = AnimationState::ON_AIR;
-		velocity_.y = -kJumpSpeed;
+        if (should_jump_) {
+            state_ = AnimationState::ON_AIR;
+            velocity_.y = -kJumpSpeed;
+        }
 		break;
 
 	case AnimationState::WALLSLIDING:
-		state_ = AnimationState::WALLKICKING;
-        show_wallkick_start_ = true;
-        velocity_.y = 0.0;
+        if (should_jump_) {
+            state_ = AnimationState::WALLKICKING;
+            show_wallkick_start_ = true;
+            velocity_.y = 0.0;
+        }
 		break;
+
+    case AnimationState::ON_AIR:
+        if (velocity_.y < 0.0 && !holding_jump_)
+            velocity_.y = 0.0;
+        break;
 
 	default:
 		// Can't jump!
 		break;
 	}
+    should_jump_ = false;
 }
 
 void PlayerCharacter::Dash()
