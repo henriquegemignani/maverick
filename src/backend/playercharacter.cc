@@ -87,7 +87,8 @@ PlayerCharacter::PlayerCharacter(ServerProxy* server)
     , player_(ugdk::resource::GetSpriteAnimationTableFromFile("animations/x.json"))
 	, server_(server)
 	, width_(8)
-	, shoot_anim_ticks_(kShootAnimationLength)
+	, dash_jump_(false)
+    , shoot_anim_ticks_(kShootAnimationLength)
     , show_dash_end_(false)
     , show_pre_walk_(false)
     , show_wall_touch_(false)
@@ -124,7 +125,7 @@ void PlayerCharacter::Move() {
     case AnimationState::WALLSLIDING:
         if (std::abs(input_x_axis_) > 0.2) {
             direction_ = sgn(input_x_axis_);
-            velocity_.x = direction_ * kWalkingSpeed;
+            velocity_.x = direction_ * (dash_jump_ ? kDashingSpeed : kWalkingSpeed);
             if (state_ == AnimationState::STANDING) {
                 show_pre_walk_ = true;
                 state_ = AnimationState::WALKING;
@@ -286,6 +287,7 @@ void PlayerCharacter::ApplyVelocity()
                 show_wall_touch_ = true;
 		    }
 			state_ = AnimationState::WALLSLIDING;
+            dash_jump_ = false;
 			velocity_.y = kWallSlidingSpeed;
 		}
 	} else if (state_ == AnimationState::WALLSLIDING) {
@@ -321,6 +323,7 @@ void PlayerCharacter::Jump() {
 	case AnimationState::WALKING:
 	case AnimationState::DASHING:
         if (should_jump_) {
+            dash_jump_ = state_ == AnimationState::DASHING;
             state_ = AnimationState::ON_AIR;
             velocity_.y = -kJumpSpeed;
         }
@@ -380,6 +383,7 @@ void PlayerCharacter::Dash()
 }
 
 void PlayerCharacter::Land() {
+    dash_jump_ = false;
 	switch (state_)
 	{
 	case AnimationState::WARPING:

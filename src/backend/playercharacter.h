@@ -73,6 +73,7 @@ private:
     bool holding_jump_;
 	bool should_dash_;
 	bool holding_dash_;
+    bool dash_jump_;
 	int dash_ticks_;
 	int shoot_anim_ticks_;
 	bool should_shoot_;
