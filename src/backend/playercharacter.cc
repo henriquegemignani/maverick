@@ -74,10 +74,10 @@ namespace {
 	const double kTerminalSpeed = 5.75;
 	const double kJumpSpeed = 5.0;
 	const double kWalkingSpeed = 1.5;
-	const double kWallSlidingSpeed = 1.0;
-    const double kWallKickJumpSpeed = 3.0;
+	const double kWallSlidingSpeed = 2.0;
+    const double kWallKickJumpSpeed = 4.0;
 	const double kDashingSpeed = 3.5;
-	const int kDashLength = 30;
+	const int kDashLength = 33;
 	const int kShootAnimationLength = 16;
 }
 
@@ -147,11 +147,13 @@ void PlayerCharacter::Move() {
 
 void PlayerCharacter::Update()
 {
+    if (position_.y > 1000)
+        position_.y = 0.0;
     GetPlayerInput();
     Move();
     Dash();
 	Jump();
-    Shoot();
+    Shoot(); 
     ApplyGravity();
     ApplyVelocity();
 	UpdateAnimation();
@@ -209,10 +211,12 @@ void PlayerCharacter::Tick() {
         }
 		break;
 	case AnimationState::DASHING:
-        if (show_dash_start_) {
-            show_dash_start_ = false;
-            dash_ticks_ = 0;
-        }
+		if (show_dash_start_) {
+			show_dash_start_ = false;
+			server_->AddEffectAt(position_ + math::Vector2D(-direction_ * 32, 0.0),
+								 Effect::Type::DASH_DUST,
+								 direction_);
+		}
 		break;
 	case AnimationState::WALKING:
 		show_pre_walk_ = false;
@@ -372,8 +376,8 @@ void PlayerCharacter::Dash()
 		if (!holding_dash_ || dash_ticks_ >= kDashLength) {
             show_dash_end_ = true;
             state_ = AnimationState::STANDING;
-		} else if (dash_ticks_ % 4 == 0) {
-            server_->AddDustAt(position_ + math::Vector2D(-direction_ * 10, -2.0));
+		} else if (dash_ticks_ % 4 == 1 && dash_ticks_ > 4) {
+            server_->AddEffectAt(position_ + math::Vector2D(-direction_ * 10, -2.0), Effect::Type::DUST);
 		}
 		break;
 

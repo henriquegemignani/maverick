@@ -14,7 +14,11 @@ class Effect
     : public ugdk::action::Observer
 {
 public:
-    explicit Effect(const ugdk::math::Vector2D& position, const std::string& effect_name);
+	enum class Type {
+		DUST,
+		DASH_DUST,
+	};
+    explicit Effect(const ugdk::math::Vector2D& position, Type type);
 
     void Update();
     void Tick() override;
@@ -22,11 +26,17 @@ public:
     bool finished() const { return finished_; }
     const ugdk::math::Vector2D& position() const { return position_; }
     const ugdk::action::SpriteAnimationPlayer& player() const { return player_; }
+	int direction() const { return direction_; }
+	void set_direction(int direction) { direction_ = direction; }
+
+	Type type() const { return type_; }
 
 private:
     ugdk::math::Vector2D position_;
     ugdk::action::SpriteAnimationPlayer player_;
     bool finished_;
+	Type type_;
+	int direction_;
 };
 
 } // namespace backend

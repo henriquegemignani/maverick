@@ -21,7 +21,8 @@ public:
     PlayerCharacter& player_character();
     const std::list<Effect>& effects() const;
 
-    void AddDustAt(const ugdk::math::Vector2D& position);
+	void AddEffectAt(const ugdk::math::Vector2D& position, Effect::Type);
+    void AddEffectAt(const ugdk::math::Vector2D& position, Effect::Type, int direction);
 
 private:
 	ServerProxy();

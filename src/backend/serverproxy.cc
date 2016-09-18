@@ -74,8 +74,13 @@ const std::list<Effect>& ServerProxy::effects() const {
     return impl_->effects_;
 }
 
-void ServerProxy::AddDustAt(const ugdk::math::Vector2D& position) {
-    impl_->effects_.emplace_back(position, "animations/dust.json");
+void ServerProxy::AddEffectAt(const ugdk::math::Vector2D& position, Effect::Type type) {
+	impl_->effects_.emplace_back(position, type);
+}
+
+void ServerProxy::AddEffectAt(const ugdk::math::Vector2D& position, Effect::Type type, int direction) {
+	AddEffectAt(position, type);
+	impl_->effects_.back().set_direction(direction);
 }
 
 ServerProxy::ServerProxy()

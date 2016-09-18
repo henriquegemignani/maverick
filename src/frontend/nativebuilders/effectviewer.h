@@ -12,12 +12,11 @@ class EffectViewer
 public:
     explicit EffectViewer(backend::ServerProxy*);
 
-    void Render(ugdk::graphic::Canvas&) const;
+    void Render(ugdk::graphic::Canvas&);
 
 private:
     backend::ServerProxy* server_;
     ugdk::graphic::Primitive primitive_;
-    ugdk::graphic::PrimitiveControllerSprite* controller_;
 };
 
 } // namespace frontend
