@@ -372,7 +372,9 @@ void PlayerCharacter::Dash()
 		if (!holding_dash_ || dash_ticks_ >= kDashLength) {
             show_dash_end_ = true;
             state_ = AnimationState::STANDING;
-		}			
+		} else if (dash_ticks_ % 4 == 0) {
+            server_->AddDustAt(position_ + math::Vector2D(-direction_ * 10, -2.0));
+		}
 		break;
 
 	default:

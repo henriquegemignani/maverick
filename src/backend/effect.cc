@@ -20,7 +20,7 @@ Effect::Effect(const ugdk::math::Vector2D& position, const std::string& effect_n
 }
 
 
-void Effect::Update(double dt)
+void Effect::Update()
 {
     player_.Update(1.0 / 60.0);
 }

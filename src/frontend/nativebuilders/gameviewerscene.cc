@@ -19,6 +19,7 @@
 #include "backend/serverproxy.h"
 #include "frontend/nativebuilders/playercharacterviewer.h"
 #include "frontend/nativebuilders/maprenderer.h"
+#include "effectviewer.h"
 
 namespace frontend {
 
@@ -39,9 +40,11 @@ std::unique_ptr<ugdk::action::Scene> GameViewerScene() {
     static ugdk::math::Vector2D camera;
 
     static PlayerCharacterViewer player_character_viewer(&server_proxy->player_character());
+    static EffectViewer effect_viewer(server_proxy);
 
     static MapRenderer map_renderer(server_proxy->map(), [](ugdk::graphic::Canvas& canvas, const ugdk::math::Frame& view) {
         player_character_viewer.Render(canvas);
+        effect_viewer.Render(canvas);
     });
 
 	scene->set_render_function([=](ugdk::graphic::Canvas& canvas) {

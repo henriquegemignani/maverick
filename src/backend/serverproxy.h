@@ -3,6 +3,9 @@
 
 #include <memory>
 #include <tiled-reader/map.h>
+#include <ugdk/math.h>
+#include "effect.h"
+
 
 namespace backend {
 class PlayerCharacter;
@@ -16,6 +19,9 @@ public:
     void Tick();
     const tiled::Map* map() const;
     PlayerCharacter& player_character();
+    const std::list<Effect>& effects() const;
+
+    void AddDustAt(const ugdk::math::Vector2D& position);
 
 private:
 	ServerProxy();

@@ -17,6 +17,7 @@ struct ServerProxyImpl {
 	std::unique_ptr<server::PlatformingCore> core_;
     PlayerCharacter player_character_;
     bool frame_stepping_;
+    std::list<Effect> effects_;
 
     void Tick();
 };
@@ -39,6 +40,10 @@ void ServerProxyImpl::Tick() {
         return;
 
     player_character_.Update();
+    for (auto& effect : effects_)
+        effect.Update();
+
+    effects_.remove_if([](const Effect& effect) { return effect.finished(); });
 }
 
 // =========================================
@@ -63,6 +68,14 @@ const tiled::Map* ServerProxy::map() const {
 
 PlayerCharacter& ServerProxy::player_character() {
     return impl_->player_character_;
+}
+
+const std::list<Effect>& ServerProxy::effects() const {
+    return impl_->effects_;
+}
+
+void ServerProxy::AddDustAt(const ugdk::math::Vector2D& position) {
+    impl_->effects_.emplace_back(position, "animations/dust.json");
 }
 
 ServerProxy::ServerProxy()

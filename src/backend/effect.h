@@ -16,12 +16,12 @@ class Effect
 public:
     explicit Effect(const ugdk::math::Vector2D& position, const std::string& effect_name);
 
-    void Update(double dt);
+    void Update();
     void Tick() override;
     
     bool finished() const { return finished_; }
     const ugdk::math::Vector2D& position() const { return position_; }
-    ugdk::action::SpriteAnimationPlayer& player() { return player_; }
+    const ugdk::action::SpriteAnimationPlayer& player() const { return player_; }
 
 private:
     ugdk::math::Vector2D position_;
