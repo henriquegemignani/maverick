@@ -17,13 +17,11 @@ SET(GAME_SRCS
     frontend/frontend.h 
     frontend/main.cc 
     frontend/nativebuilders.h 
-    frontend/nativebuilders/effectviewer.cc 
-    frontend/nativebuilders/effectviewer.h 
     frontend/nativebuilders/gameviewerscene.cc 
     frontend/nativebuilders/maprenderer.cc 
     frontend/nativebuilders/maprenderer.h 
-    frontend/nativebuilders/playercharacterviewer.cc 
-    frontend/nativebuilders/playercharacterviewer.h 
+    frontend/nativebuilders/objectviewer.cc 
+    frontend/nativebuilders/objectviewer.h 
     frontend/scenes/console.cc 
     frontend/scenes/console.h 
     server/platformingcore.cc 

@@ -1,6 +1,7 @@
 #ifndef MAVERICK_BACKEND_PLAYERCHARACTER_H_
 #define MAVERICK_BACKEND_PLAYERCHARACTER_H_
 
+#include "backend/animatedobject.h"
 #include <memory>
 #include <ugdk/input/events.h>
 #include <ugdk/system/eventhandler.h>
@@ -11,7 +12,8 @@ namespace backend {
 class ServerProxy;
 
 class PlayerCharacter 
-    : public ugdk::system::Listener<ugdk::input::JoystickDisconnectedEvent>
+    : public AnimatedObject
+	, public ugdk::system::Listener<ugdk::input::JoystickDisconnectedEvent>
     , public ugdk::system::Listener<ugdk::input::JoystickAxisEvent>
     , public ugdk::system::Listener<ugdk::input::JoystickButtonPressedEvent>
     , public ugdk::system::Listener<ugdk::input::JoystickButtonReleasedEvent>
@@ -40,8 +42,6 @@ public:
     void Handle(const ugdk::input::JoystickButtonReleasedEvent& ev) override;
     void Tick() override;
 
-    double direction() const { return direction_; }
-    const ugdk::math::Vector2D& position() const { return position_; }
     ugdk::action::SpriteAnimationPlayer& player() { return player_; }
 	bool on_ground() const;
 
@@ -61,10 +61,8 @@ private:
 
     void ChangeAnimation(const std::string&);
 
-    ugdk::math::Vector2D position_, velocity_;
-    int direction_;
+    ugdk::math::Vector2D velocity_;
     std::weak_ptr<ugdk::input::Joystick> current_joystick_;
-    ugdk::action::SpriteAnimationPlayer player_;
     AnimationState state_;
 	ServerProxy* server_;
 	double width_;

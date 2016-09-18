@@ -82,9 +82,7 @@ namespace {
 }
 
 PlayerCharacter::PlayerCharacter(ServerProxy* server)
-    : position_(64.0, -16.0)
-    , direction_(1)
-    , player_(ugdk::resource::GetSpriteAnimationTableFromFile("animations/x.json"))
+    : AnimatedObject("animations/x.json", math::Vector2D(64.0, -16.0))
 	, server_(server)
 	, width_(8)
 	, dash_jump_(false)

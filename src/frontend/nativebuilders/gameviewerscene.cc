@@ -3,23 +3,15 @@
 
 #include <ugdk/action/scene.h>
 #include <ugdk/graphic/canvas.h>
-#include <ugdk/graphic/module.h>
-#include <ugdk/graphic/primitive.h>
-#include <ugdk/graphic/textureatlas.h>
-#include <ugdk/graphic/primitivesetup.h>
-#include <ugdk/graphic/sprite.h>
-#include <ugdk/resource/module.h>
-#include <ugdk/ui/drawable/texturedrectangle.h>
 #include <ugdk/input/events.h>
 #include <ugdk/input/module.h>
 #include <ugdk/input/joystick.h>
 #include <ugdk/math/frame.h>
-#include <tiled-reader/stdiofileloader.h>
 
 #include "backend/serverproxy.h"
-#include "frontend/nativebuilders/playercharacterviewer.h"
+#include "backend/playercharacter.h"
 #include "frontend/nativebuilders/maprenderer.h"
-#include "effectviewer.h"
+#include "objectviewer.h"
 
 namespace frontend {
 
@@ -39,12 +31,9 @@ std::unique_ptr<ugdk::action::Scene> GameViewerScene() {
 
     static ugdk::math::Vector2D camera;
 
-    static PlayerCharacterViewer player_character_viewer(&server_proxy->player_character());
-    static EffectViewer effect_viewer(server_proxy);
-
+    static ObjectViewer object_viewer(server_proxy);
     static MapRenderer map_renderer(server_proxy->map(), [](ugdk::graphic::Canvas& canvas, const ugdk::math::Frame& view) {
-        player_character_viewer.Render(canvas);
-        effect_viewer.Render(canvas);
+        object_viewer.Render(canvas);
     });
 
 	scene->set_render_function([=](ugdk::graphic::Canvas& canvas) {

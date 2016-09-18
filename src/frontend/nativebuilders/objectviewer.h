@@ -7,10 +7,10 @@
 
 namespace frontend {
 
-class EffectViewer
+class ObjectViewer
 {
 public:
-    explicit EffectViewer(backend::ServerProxy*);
+    explicit ObjectViewer(backend::ServerProxy*);
 
     void Render(ugdk::graphic::Canvas&);
 
