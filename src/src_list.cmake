@@ -1,4 +1,6 @@
 SET(GAME_SRCS 
+    backend/animatedobject.cc 
+    backend/animatedobject.h 
     backend/bullet.cc 
     backend/bullet.h 
     backend/effect.cc 

@@ -23,11 +23,9 @@ std::string animation_table_name_for_type(Effect::Type type) {
 
 
 Effect::Effect(const ugdk::math::Vector2D& position, Type type)
-    : position_(position)
-    , player_(ugdk::resource::GetSpriteAnimationTableFromFile(animation_table_name_for_type(type)))
+	: AnimatedObject(animation_table_name_for_type(type), position)
     , finished_(false)
 	, type_(type)
-	, direction_(1)
 {
     player_.AddObserver(this);
     player_.Select("idle");

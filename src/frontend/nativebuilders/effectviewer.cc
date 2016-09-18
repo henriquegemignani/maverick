@@ -23,40 +23,30 @@ using namespace ugdk;
 namespace {
 graphic::TextureAtlas* dust_atlas = nullptr;
 graphic::TextureAtlas* dash_dust_atlas = nullptr;
+graphic::TextureAtlas* buster_atlas = nullptr;
 
 void populate_atlas() {
 	if (dust_atlas) return;
 
 	dust_atlas = resource::GetTextureAtlasFromFile("spritesheets/dust");
 	dash_dust_atlas = resource::GetTextureAtlasFromFile("spritesheets/dash_dust");
+	buster_atlas = resource::GetTextureAtlasFromFile("spritesheets/buster");
 }
 
-graphic::TextureAtlas* get_atlas(backend::Effect::Type type) {
-	switch(type) {
-	case backend::Effect::Type::DUST:
-		return dust_atlas;
-		break;
-	case backend::Effect::Type::DASH_DUST:
-		return dash_dust_atlas;
-		break;
-	default:
-		throw std::exception("unsupported effect type");
-		break;
-	}
-}
+std::tuple<graphic::TextureAtlas*, math::Vector2D>
+get_data_for(const std::string& animtions_name) {
 
-math::Vector2D hotspot_for(backend::Effect::Type type) {
-	switch (type) {
-	case backend::Effect::Type::DUST:
-		return math::Vector2D(-8.0, -8.0);
-		break;
-	case backend::Effect::Type::DASH_DUST:
-		return math::Vector2D(-16.0, -32.0);
-		break;
-	default:
-		throw std::exception("unsupported effect type");
-		break;
+	if (animtions_name == "animations/dust.json") {
+		return std::make_tuple(dust_atlas, math::Vector2D(-8, -8));
+		
+	} else if (animtions_name == "animations/dash_dust.json") {
+		return std::make_tuple(dash_dust_atlas, math::Vector2D(-16, -32));
+
+	} else if (animtions_name == "animations/buster.json") {
+		return std::make_tuple(buster_atlas, math::Vector2D(-32, -32));
 	}
+
+	throw std::exception("unknown animations name");
 }
 
 }
@@ -72,27 +62,33 @@ EffectViewer::EffectViewer(backend::ServerProxy* server)
 void EffectViewer::Render(ugdk::graphic::Canvas & canvas)
 {
     for (const auto& effect : server_->effects()) {
-		auto atlas = get_atlas(effect.type());
-		auto&& frame = effect.player().current_animation_frame();
-		auto&& piece = atlas->PieceAt(frame.atlas_frame_name());
-		//primitive_.set_visualeffect(frame.effect());
-		
-		graphic::VertexDataManipulation::SetUsingSpriteFrameInformation(*primitive_.vertexdata(), math::Vector2D(), frame, piece);
-
-		// Send the texture to the GPU
-		auto sprite_unit = ugdk::graphic::manager()->ReserveTextureUnit(atlas->texture());
-		canvas.SendUniform("drawable_texture", sprite_unit);
-
-		canvas.PushAndCompose(
-			math::Geometry(
-				effect.position(),
-				math::Vector2D(effect.direction(), 1)
-			));
-		canvas.PushAndCompose(math::Geometry(hotspot_for(effect.type())));
-		graphic::PrimitiveSetup::Sprite::Render(primitive_, canvas);
-        canvas.PopGeometry();
-		canvas.PopGeometry();
+		RenderAnimatedObject(canvas, effect);
     }
+}
+
+void EffectViewer::RenderAnimatedObject(ugdk::graphic::Canvas& canvas, const backend::AnimatedObject& object) {
+	auto data = get_data_for(object.animations_name());
+
+	auto atlas = std::get<0>(data);
+	auto&& frame = object.player().current_animation_frame();
+	auto&& piece = atlas->PieceAt(frame.atlas_frame_name());
+	//primitive_.set_visualeffect(frame.effect());
+
+	graphic::VertexDataManipulation::SetUsingSpriteFrameInformation(*primitive_.vertexdata(), math::Vector2D(), frame, piece);
+
+	// Send the texture to the GPU
+	auto sprite_unit = ugdk::graphic::manager()->ReserveTextureUnit(atlas->texture());
+	canvas.SendUniform("drawable_texture", sprite_unit);
+
+	canvas.PushAndCompose(
+		math::Geometry(
+			object.position(),
+			math::Vector2D(object.direction(), 1)
+		));
+	canvas.PushAndCompose(math::Geometry(std::get<1>(data)));
+	graphic::PrimitiveSetup::Sprite::Render(primitive_, canvas);
+	canvas.PopGeometry();
+	canvas.PopGeometry();
 }
 
 } // namespace frontend

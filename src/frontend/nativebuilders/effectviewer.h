@@ -15,6 +15,8 @@ public:
     void Render(ugdk::graphic::Canvas&);
 
 private:
+	void RenderAnimatedObject(ugdk::graphic::Canvas&, const backend::AnimatedObject&);
+
     backend::ServerProxy* server_;
     ugdk::graphic::Primitive primitive_;
 };
