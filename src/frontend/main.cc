@@ -1,6 +1,7 @@
 
 #include <ugdk/system/config.h>
 #include <ugdk/system/engine.h>
+#include <ugdk/graphic/module.h>
 #include <ugdk/resource/module.h>
 #include <ugdk/debug/log.h>
 
@@ -28,6 +29,8 @@ int main(int argc, char** argv) {
 
 	if (!ugdk::system::Initialize(engine_config))
 		ExitWithFatalError("Could not initialize UGDK.");
+
+    ugdk::graphic::manager()->SetUserNearestNeighborTextures(true);
 
 	frontend::Initialize();
 	frontend::Start();

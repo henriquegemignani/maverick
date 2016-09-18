@@ -66,13 +66,16 @@ namespace {
 		return (T(0) < val) - (val < T(0));
 	}
 
+    const int kJumpJoystickKey = 11;
 	const int kDashJoystickKey = 12;
+    const int kShootJoystickKey = 13;
 
 	const double kGravity = 0.25;
 	const double kTerminalSpeed = 5.75;
 	const double kJumpSpeed = 5.0;
 	const double kWalkingSpeed = 1.5;
 	const double kWallSlidingSpeed = 1.0;
+    const double kWallKickJumpSpeed = 3.0;
 	const double kDashingSpeed = 3.5;
 	const int kDashLength = 45;
 	const int kShootAnimationLength = 16;
@@ -84,9 +87,11 @@ PlayerCharacter::PlayerCharacter(ServerProxy* server)
     , player_(ugdk::resource::GetSpriteAnimationTableFromFile("animations/x.json"))
 	, server_(server)
 	, width_(8)
-	, show_pre_walk_(false)
-    , shoot_anim_ticks_(kShootAnimationLength)
+	, shoot_anim_ticks_(kShootAnimationLength)
+    , show_pre_walk_(false)
     , show_wall_touch_(false)
+    , show_wallkick_start_(false)
+    , show_jump_recoil_(false)
 {
     player_.AddObserver(this);
     player_.Select("warpin");
@@ -98,6 +103,11 @@ void PlayerCharacter::Update(double dt)
 {
     GetPlayerInput();
 
+    if (state_ == AnimationState::DASHING) {
+        if (std::abs(input_x_axis_) > 0.2 && sgn(input_x_axis_) != direction_)
+            state_ = AnimationState::WALKING;
+    }
+
 	if (IsAcceptingMovementInput()) {
 		if (std::abs(input_x_axis_) > 0.2) {
 			direction_ = sgn(input_x_axis_);
@@ -106,13 +116,18 @@ void PlayerCharacter::Update(double dt)
 				show_pre_walk_ = true;
 				state_ = AnimationState::WALKING;
 			}
-		}
-		else {
+		} else {
 			velocity_.x = 0.0;
 			if (state_ == AnimationState::WALKING)
 				state_ = AnimationState::STANDING;
 		}
 	}
+
+    if (state_ == AnimationState::ON_AIR) {
+        if (velocity_.y < 0.0 && !holding_jump_)
+            velocity_.y = 0.0;
+    }
+
 	Dash();
 	Jump();
 
@@ -126,7 +141,6 @@ void PlayerCharacter::Update(double dt)
     ApplyGravity();
     ApplyVelocity();
 	UpdateAnimation();
-	player_.Update(1.0 / 60.0);
 }
 
 void PlayerCharacter::HandleNewJoystick(std::shared_ptr<ugdk::input::Joystick> joystick)
@@ -147,11 +161,14 @@ void PlayerCharacter::Handle(const ugdk::input::JoystickAxisEvent& ev) {
 }
 
 void PlayerCharacter::Handle(const ugdk::input::JoystickButtonPressedEvent& ev) {
-    if (ev.button == 11) {
+    if (ev.button == kJumpJoystickKey) {
 		should_jump_ = true;
     }
 	if (ev.button == kDashJoystickKey)
 		should_dash_ = true;
+
+    if (ev.button == kShootJoystickKey)
+        should_shoot_ = true;
 }
 
 void PlayerCharacter::Handle(const ugdk::input::JoystickButtonReleasedEvent& ev) {
@@ -169,7 +186,13 @@ void PlayerCharacter::Tick() {
         show_wall_touch_ = false;
         break;
 	case AnimationState::WALLKICKING:
-		state_ = AnimationState::ON_AIR;
+        if (show_wallkick_start_) {
+            show_wallkick_start_ = false;
+            velocity_.y = -kWallKickJumpSpeed;
+            velocity_.x = -direction_ * kWalkingSpeed;
+        } else {
+            state_ = AnimationState::ON_AIR;
+        }
 		break;
 	case AnimationState::DASHING:
 		dash_start_ = false;
@@ -177,6 +200,8 @@ void PlayerCharacter::Tick() {
 	case AnimationState::WALKING:
 		show_pre_walk_ = false;
         break;
+    case AnimationState::STANDING:
+        show_jump_recoil_ = false;
 	default:
 		break;
     }
@@ -185,6 +210,7 @@ void PlayerCharacter::Tick() {
 void PlayerCharacter::GetPlayerInput() {
     if (auto joystick = current_joystick_.lock()) {
 		input_x_axis_ = joystick->GetAxisStatus(0).Percentage();
+        holding_jump_ = joystick->IsDown(kJumpJoystickKey);
 		holding_dash_ = joystick->IsDown(kDashJoystickKey);
 
     } else {
@@ -197,6 +223,7 @@ void PlayerCharacter::GetPlayerInput() {
 			input_x_axis_ = 0.0;
 		}
 
+        holding_jump_ = keyboard.IsDown(input::Scancode::SPACE);
 		if (keyboard.IsPressed(input::Scancode::SPACE))
 			should_jump_ = true;
 
@@ -211,8 +238,10 @@ void PlayerCharacter::GetPlayerInput() {
 
 void PlayerCharacter::ApplyGravity()
 {
-    velocity_.y += kGravity;
-    velocity_.y = std::min(velocity_.y, kTerminalSpeed);
+    if (state_ != AnimationState::WALLKICKING) {
+        velocity_.y += kGravity;
+        velocity_.y = std::min(velocity_.y, kTerminalSpeed);        
+    }
 }
 
 void PlayerCharacter::ApplyVelocity()
@@ -231,8 +260,11 @@ void PlayerCharacter::ApplyVelocity()
 		double tile_distance = std::abs(tile_corner - cornerX);
 		x_to_move = xDirection * std::min(tile_distance, std::abs(velocity_.x));
 
-		if (!on_ground()) {
-			//direction_ = -xDirection;
+        if (on_ground()) {
+            velocity_.x = 0.0;
+            state_ = AnimationState::STANDING;
+
+        } else if (velocity_.y > 0.0) {
 		    if (state_ != AnimationState::WALLSLIDING) {
                 show_wall_touch_ = true;
 		    }
@@ -279,11 +311,9 @@ void PlayerCharacter::Jump() {
 		break;
 
 	case AnimationState::WALLSLIDING:
-		// TODO: wallkick
 		state_ = AnimationState::WALLKICKING;
-		velocity_.y = -kJumpSpeed;
-		direction_ = -direction_;
-		velocity_.x = direction_ * kWalkingSpeed;
+        show_wallkick_start_ = true;
+        velocity_.y = 0.0;
 		break;
 
 	default:
@@ -332,6 +362,8 @@ void PlayerCharacter::Land() {
 		break;
 
 	case AnimationState::ON_AIR:
+        show_jump_recoil_ = true;
+        // no break on purpose
 	case AnimationState::WALLSLIDING:
 	case AnimationState::WALLKICKING:
 		state_ = AnimationState::STANDING;
@@ -344,12 +376,16 @@ void PlayerCharacter::Land() {
 
 void PlayerCharacter::UpdateAnimation()
 {
+    player_.Update(1.0 / 60.0);
 	switch (state_)
 	{
 	case AnimationState::WARPING: break;
 	case AnimationState::WARP_FINISH: break;
 	case AnimationState::STANDING:
-        ChangeAnimation("stand");
+        if (show_jump_recoil_)
+            ChangeAnimation("jumprecoil");
+        else
+            ChangeAnimation("stand");
 		break;
 	case AnimationState::WALKING:
 		if (show_pre_walk_)
@@ -365,7 +401,6 @@ void PlayerCharacter::UpdateAnimation()
 		}
 		break;
 	case AnimationState::DASHING:
-		// Missing dashstart
 		if (dash_start_)
             ChangeAnimation("dashstart");
 		else
@@ -378,7 +413,10 @@ void PlayerCharacter::UpdateAnimation()
             ChangeAnimation("wallslide");
 		break;
 	case AnimationState::WALLKICKING:
-        ChangeAnimation("walljump");
+        if (show_wallkick_start_)
+            ChangeAnimation("walljump_start");
+        else
+            ChangeAnimation("walljump_end");
 		break;
 	default: break;
 	}

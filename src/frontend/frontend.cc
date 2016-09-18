@@ -17,6 +17,7 @@ void PopuplateUGDKConfiguration(ugdk::system::Configuration& config) {
 	config.windows_list[0].vsync = true;
     //config.windows_list[0].size = settings->resolution_vector();
     //config.windows_list[0].fullscreen = settings->fullscreen();
+    config.limit_frame_time_with_sleep = true;
 }
 
 void Initialize() {

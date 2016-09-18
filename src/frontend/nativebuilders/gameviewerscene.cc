@@ -28,6 +28,7 @@ namespace {
 	struct VertexXYUV {
 		float x, y, u, v;
 	};
+    bool frame_stepping = false;
 }
 
 using namespace ugdk;
@@ -64,7 +65,11 @@ std::unique_ptr<ugdk::action::Scene> GameViewerScene() {
     }
 
     scene->AddTask([](double dt) {
-        player_character.Update(dt);
+        if (input::manager()->keyboard().IsPressed(input::Scancode::P))
+            frame_stepping = !frame_stepping;
+
+        if (!frame_stepping || input::manager()->keyboard().IsPressed(input::Scancode::F))
+            player_character.Update(dt);
 		camera.x = std::floor(player_character.position().x * 2 - 400.0);
     });
 

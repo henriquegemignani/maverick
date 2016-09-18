@@ -66,15 +66,19 @@ private:
 	double width_;
 	double input_x_axis_;
 	bool should_jump_;
+    bool holding_jump_;
 	bool should_dash_;
 	bool holding_dash_;
 	int dash_ticks_;
-	bool dash_start_;
-	bool show_pre_walk_;
 	int shoot_anim_ticks_;
 	bool should_shoot_;
     std::string current_animation_name_;
+
+    bool dash_start_;
+    bool show_pre_walk_;
 	bool show_wall_touch_;
+    bool show_wallkick_start_;
+    bool show_jump_recoil_;
 };
 
 } // namespace backend

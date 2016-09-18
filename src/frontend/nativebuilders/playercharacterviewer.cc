@@ -23,7 +23,7 @@ PlayerCharacterViewer::PlayerCharacterViewer(backend::PlayerCharacter* player_ch
     : player_character_(player_character)
     , primitive_(nullptr, nullptr)
 {
-    graphic::PrimitiveSetup::Sprite::Prepare(primitive_, resource::GetTextureAtlasFromFile("repo"));
+    graphic::PrimitiveSetup::Sprite::Prepare(primitive_, resource::GetTextureAtlasFromFile("spritesheets/x"));
     controller_ = dynamic_cast<ugdk::graphic::PrimitiveControllerSprite*>(primitive_.controller().get());
 
     player_character_->player().set_frame_change_callback([this](const ugdk::action::SpriteAnimationFrame& frame) {

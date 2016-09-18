@@ -15,7 +15,7 @@ namespace frontend {
 class PlayerCharacterViewer
 {
 public:
-    PlayerCharacterViewer(backend::PlayerCharacter* player_character);
+    explicit PlayerCharacterViewer(backend::PlayerCharacter* player_character);
 
     void Render(ugdk::graphic::Canvas&) const;
 
