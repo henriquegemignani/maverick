@@ -8,9 +8,9 @@
 #include <ugdk/action/spritetypes.h>
 
 namespace backend {
-	class ServerProxy;
+class ServerProxy;
 
-	class PlayerCharacter 
+class PlayerCharacter 
     : public ugdk::system::Listener<ugdk::input::JoystickDisconnectedEvent>
     , public ugdk::system::Listener<ugdk::input::JoystickAxisEvent>
     , public ugdk::system::Listener<ugdk::input::JoystickButtonPressedEvent>
@@ -18,7 +18,7 @@ namespace backend {
     , public ugdk::action::Observer
 {
 public:
-    PlayerCharacter(ServerProxy*);
+    explicit PlayerCharacter(ServerProxy*);
 
     enum class AnimationState {
         WARPING,
@@ -52,20 +52,29 @@ private:
     void ApplyVelocity();
 	void UpdateAnimation();
 	void Jump();
+	void Dash();
 	void Land();
 
+    void ChangeAnimation(const std::string&);
+
     ugdk::math::Vector2D position_, velocity_;
-    bool on_ground_;
-	bool on_wall_;
     int direction_;
     std::weak_ptr<ugdk::input::Joystick> current_joystick_;
     ugdk::action::SpriteAnimationPlayer player_;
     AnimationState state_;
 	ServerProxy* server_;
-	bool was_on_ground_;
 	double width_;
 	double input_x_axis_;
 	bool should_jump_;
+	bool should_dash_;
+	bool holding_dash_;
+	int dash_ticks_;
+	bool dash_start_;
+	bool show_pre_walk_;
+	int shoot_anim_ticks_;
+	bool should_shoot_;
+    std::string current_animation_name_;
+	bool show_wall_touch_;
 };
 
 } // namespace backend
