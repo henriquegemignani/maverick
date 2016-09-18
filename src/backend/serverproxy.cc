@@ -18,6 +18,7 @@ struct ServerProxyImpl {
     PlayerCharacter player_character_;
     bool frame_stepping_;
     std::list<Effect> effects_;
+	std::list<Bullet> bullets_;
 
     void Tick();
 };
@@ -40,10 +41,14 @@ void ServerProxyImpl::Tick() {
         return;
 
     player_character_.Update();
-    for (auto& effect : effects_)
-        effect.Update();
+    
+	for (auto& obj : effects_)
+		obj.Update();
+	effects_.remove_if([](const Effect& obj) { return obj.finished(); });
 
-    effects_.remove_if([](const Effect& effect) { return effect.finished(); });
+	for (auto& obj : bullets_)
+		obj.Update();
+	bullets_.remove_if([](const Bullet& obj) { return obj.finished(); });
 }
 
 // =========================================
@@ -74,6 +79,10 @@ const std::list<Effect>& ServerProxy::effects() const {
     return impl_->effects_;
 }
 
+const std::list<Bullet>& ServerProxy::bullets() const {
+	return impl_->bullets_;
+}
+
 void ServerProxy::AddEffectAt(const ugdk::math::Vector2D& position, Effect::Type type) {
 	impl_->effects_.emplace_back(position, type);
 }
@@ -81,6 +90,11 @@ void ServerProxy::AddEffectAt(const ugdk::math::Vector2D& position, Effect::Type
 void ServerProxy::AddEffectAt(const ugdk::math::Vector2D& position, Effect::Type type, int direction) {
 	AddEffectAt(position, type);
 	impl_->effects_.back().set_direction(direction);
+}
+
+void ServerProxy::ShootBulletAt(const ugdk::math::Vector2D& position, Bullet::Type type, int direction) {
+	impl_->bullets_.emplace_back(position, type);
+	impl_->bullets_.back().set_direction(direction);
 }
 
 ServerProxy::ServerProxy()

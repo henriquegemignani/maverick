@@ -64,9 +64,12 @@ ObjectViewer::ObjectViewer(backend::ServerProxy* server)
 void ObjectViewer::Render(ugdk::graphic::Canvas & canvas)
 {
 	RenderAnimatedObject(canvas, server_->player_character());
-    for (const auto& effect : server_->effects()) {
-		RenderAnimatedObject(canvas, effect);
-    }
+	for (const auto& obj : server_->effects()) {
+		RenderAnimatedObject(canvas, obj);
+	}
+	for (const auto& obj : server_->bullets()) {
+		RenderAnimatedObject(canvas, obj);
+	}
 }
 
 void ObjectViewer::RenderAnimatedObject(ugdk::graphic::Canvas& canvas, const backend::AnimatedObject& object) {

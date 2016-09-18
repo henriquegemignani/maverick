@@ -86,7 +86,8 @@ PlayerCharacter::PlayerCharacter(ServerProxy* server)
 	, server_(server)
 	, width_(8)
 	, dash_jump_(false)
-    , shoot_anim_ticks_(kShootAnimationLength)
+	, shoot_anim_ticks_(kShootAnimationLength)
+    , should_shoot_(false)
     , show_dash_end_(false)
     , show_pre_walk_(false)
     , show_wall_touch_(false)
@@ -105,6 +106,17 @@ void PlayerCharacter::Shoot() {
     if (should_shoot_) {
         should_shoot_ = false;
         shoot_anim_ticks_ = 0;
+		
+		math::Vector2D bullet_offset(8, -19);
+		if (state_ == AnimationState::DASHING) {
+			bullet_offset.x += 16;
+			bullet_offset.y += 4;
+		}
+		bullet_offset.x *= direction_;
+
+		server_->ShootBulletAt(position_ + bullet_offset,
+							   Bullet::Type::X1_LV0,
+							   direction_);
     }
 }
 

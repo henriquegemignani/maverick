@@ -5,6 +5,7 @@
 #include <tiled-reader/map.h>
 #include <ugdk/math.h>
 #include "effect.h"
+#include "bullet.h"
 
 
 namespace backend {
@@ -20,9 +21,11 @@ public:
     const tiled::Map* map() const;
     PlayerCharacter& player_character();
     const std::list<Effect>& effects() const;
+	const std::list<Bullet>& bullets() const;
 
 	void AddEffectAt(const ugdk::math::Vector2D& position, Effect::Type);
     void AddEffectAt(const ugdk::math::Vector2D& position, Effect::Type, int direction);
+	void ShootBulletAt(const ugdk::math::Vector2D& position, Bullet::Type, int direction);
 
 private:
 	ServerProxy();

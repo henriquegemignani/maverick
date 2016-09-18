@@ -17,6 +17,12 @@ public:
 		X1_LV0,
 		X1_LV1,
 	};
+	enum class State {
+		START,
+		PRELOOP,
+		LOOP,
+		HIT
+	};
     explicit Bullet(const ugdk::math::Vector2D& position, Type type);
 
     void Update();
@@ -27,8 +33,12 @@ public:
 	Type type() const { return type_; }
 
 private:
+	void UpdateAnimation();
+
     bool finished_;
 	Type type_;
+	int time_alive_;
+	State state_;
 };
 
 } // namespace backend
