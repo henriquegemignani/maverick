@@ -53,6 +53,7 @@ private:
 	void UpdateAnimation();
 	void Jump();
 	void Dash();
+    void Shoot();
 	void Land();
 
     void ChangeAnimation(const std::string&);
@@ -74,7 +75,8 @@ private:
 	bool should_shoot_;
     std::string current_animation_name_;
 
-    bool dash_start_;
+    bool show_dash_start_;
+    bool show_dash_end_;
     bool show_pre_walk_;
 	bool show_wall_touch_;
     bool show_wallkick_start_;

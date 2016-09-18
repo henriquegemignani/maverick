@@ -77,7 +77,7 @@ namespace {
 	const double kWallSlidingSpeed = 1.0;
     const double kWallKickJumpSpeed = 3.0;
 	const double kDashingSpeed = 3.5;
-	const int kDashLength = 45;
+	const int kDashLength = 30;
 	const int kShootAnimationLength = 16;
 }
 
@@ -88,6 +88,7 @@ PlayerCharacter::PlayerCharacter(ServerProxy* server)
 	, server_(server)
 	, width_(8)
 	, shoot_anim_ticks_(kShootAnimationLength)
+    , show_dash_end_(false)
     , show_pre_walk_(false)
     , show_wall_touch_(false)
     , show_wallkick_start_(false)
@@ -97,6 +98,15 @@ PlayerCharacter::PlayerCharacter(ServerProxy* server)
     player_.Select("warpin");
     player_.Refresh();
     state_ = AnimationState::WARPING;
+}
+
+void PlayerCharacter::Shoot() {
+    shoot_anim_ticks_++;
+
+    if (should_shoot_) {
+        should_shoot_ = false;
+        shoot_anim_ticks_ = 0;
+    }
 }
 
 void PlayerCharacter::Update(double dt)
@@ -130,13 +140,7 @@ void PlayerCharacter::Update(double dt)
 
 	Dash();
 	Jump();
-
-    shoot_anim_ticks_++;
-
-    if (should_shoot_) {
-        should_shoot_ = false;
-        shoot_anim_ticks_ = 0;
-    }
+    Shoot();
 
     ApplyGravity();
     ApplyVelocity();
@@ -195,13 +199,17 @@ void PlayerCharacter::Tick() {
         }
 		break;
 	case AnimationState::DASHING:
-		dash_start_ = false;
+        if (show_dash_start_) {
+            show_dash_start_ = false;
+            dash_ticks_ = 0;
+        }
 		break;
 	case AnimationState::WALKING:
 		show_pre_walk_ = false;
         break;
     case AnimationState::STANDING:
         show_jump_recoil_ = false;
+        show_dash_end_ = false;
 	default:
 		break;
     }
@@ -332,7 +340,7 @@ void PlayerCharacter::Dash()
 			state_ = AnimationState::DASHING;
 			velocity_.x = direction_ * kDashingSpeed;
 			dash_ticks_ = 0;
-			dash_start_ = true;
+			show_dash_start_ = true;
 		}
 		break;
 
@@ -342,8 +350,10 @@ void PlayerCharacter::Dash()
 
 	case AnimationState::DASHING:
 		dash_ticks_++;
-		if (!holding_dash_ || dash_ticks_ >= kDashLength)
-			state_ = AnimationState::STANDING;
+		if (!holding_dash_ || dash_ticks_ >= kDashLength) {
+            show_dash_end_ = true;
+            state_ = AnimationState::STANDING;
+		}			
 		break;
 
 	default:
@@ -384,6 +394,8 @@ void PlayerCharacter::UpdateAnimation()
 	case AnimationState::STANDING:
         if (show_jump_recoil_)
             ChangeAnimation("jumprecoil");
+        else if (show_dash_end_)
+            ChangeAnimation("dashend");
         else
             ChangeAnimation("stand");
 		break;
@@ -401,7 +413,7 @@ void PlayerCharacter::UpdateAnimation()
 		}
 		break;
 	case AnimationState::DASHING:
-		if (dash_start_)
+		if (show_dash_start_)
             ChangeAnimation("dashstart");
 		else
             ChangeAnimation("dash");
