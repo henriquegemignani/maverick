@@ -28,12 +28,9 @@ namespace {
 	struct VertexXYUV {
 		float x, y, u, v;
 	};
-    bool frame_stepping = false;
 }
 
 using namespace ugdk;
-
-
 
 std::unique_ptr<ugdk::action::Scene> GameViewerScene() {
 	auto server_proxy = backend::ServerProxy::reference();
@@ -41,8 +38,7 @@ std::unique_ptr<ugdk::action::Scene> GameViewerScene() {
 
     static ugdk::math::Vector2D camera;
 
-    static backend::PlayerCharacter player_character(server_proxy);
-    static PlayerCharacterViewer player_character_viewer(&player_character);
+    static PlayerCharacterViewer player_character_viewer(&server_proxy->player_character());
 
     static MapRenderer map_renderer(server_proxy->map(), [](ugdk::graphic::Canvas& canvas, const ugdk::math::Frame& view) {
         player_character_viewer.Render(canvas);
@@ -57,20 +53,17 @@ std::unique_ptr<ugdk::action::Scene> GameViewerScene() {
 	});
 
     scene->event_handler().AddListener<ugdk::input::JoystickConnectedEvent>([=](const ugdk::input::JoystickConnectedEvent& ev) {
-        player_character.HandleNewJoystick(ev.joystick.lock());
+        server_proxy->player_character().HandleNewJoystick(ev.joystick.lock());
     });
     auto joysticks = ugdk::input::manager()->CurrentJoysticks();
     if (!joysticks.empty()) {
-        player_character.HandleNewJoystick(joysticks.front());
+        server_proxy->player_character().HandleNewJoystick(joysticks.front());
     }
 
     scene->AddTask([](double dt) {
-        if (input::manager()->keyboard().IsPressed(input::Scancode::P))
-            frame_stepping = !frame_stepping;
-
-        if (!frame_stepping || input::manager()->keyboard().IsPressed(input::Scancode::F))
-            player_character.Update(dt);
-		camera.x = std::floor(player_character.position().x * 2 - 400.0);
+        auto server_proxy = backend::ServerProxy::reference();
+        server_proxy->Tick();
+		camera.x = std::floor(server_proxy->player_character().position().x * 2 - 400.0);
     });
 
 	return std::move(scene);

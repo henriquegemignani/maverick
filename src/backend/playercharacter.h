@@ -31,7 +31,7 @@ public:
 		WALLKICKING,
     };
 
-    void Update(double dt);
+    void Update();
 
     void HandleNewJoystick(std::shared_ptr<ugdk::input::Joystick>);
     void Handle(const ugdk::input::JoystickDisconnectedEvent& ev) override;

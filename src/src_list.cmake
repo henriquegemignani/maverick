@@ -1,4 +1,6 @@
 SET(GAME_SRCS 
+    backend/effect.cc 
+    backend/effect.h 
     backend/playercharacter.cc 
     backend/playercharacter.h 
     backend/serverproxy.cc 

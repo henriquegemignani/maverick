@@ -145,7 +145,7 @@ void PlayerCharacter::Move() {
     }
 }
 
-void PlayerCharacter::Update(double dt)
+void PlayerCharacter::Update()
 {
     GetPlayerInput();
     Move();

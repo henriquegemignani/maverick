@@ -5,19 +5,21 @@
 #include <tiled-reader/map.h>
 
 namespace backend {
-
+class PlayerCharacter;
 struct ServerProxyImpl;
 
 class ServerProxy {
 public:
 	~ServerProxy();
 	static ServerProxy* reference();
-	const tiled::Map* map() const;
+	
+    void Tick();
+    const tiled::Map* map() const;
+    PlayerCharacter& player_character();
 
 private:
 	ServerProxy();
 	std::unique_ptr<ServerProxyImpl> impl_;
-
 };
 
 } // namespace frontend
