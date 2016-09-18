@@ -79,20 +79,30 @@ namespace {
 	const double kDashingSpeed = 3.5;
 	const int kDashLength = 33;
 	const int kShootAnimationLength = 16;
+	const int kBusterLevel1ChargeCount = 20;
+	const int kBusterLevel2ChargeCount = 80;
+	const int kBusterLevel3ChargeCount = 140;
+	const int kBusterLevel4ChargeCount = 200;
 }
 
 PlayerCharacter::PlayerCharacter(ServerProxy* server)
     : AnimatedObject("animations/x.json", math::Vector2D(64.0, -16.0))
 	, server_(server)
 	, width_(8)
+	, should_jump_(false)
+	, holding_jump_(false)
+	, should_dash_(false)
+	, holding_dash_(false)
+	, should_shoot_(false)
+	, holding_shoot_(false)
 	, dash_jump_(false)
 	, shoot_anim_ticks_(kShootAnimationLength)
-    , should_shoot_(false)
+	, shoot_charge_ticks_(0)
     , show_dash_end_(false)
     , show_pre_walk_(false)
     , show_wall_touch_(false)
     , show_wallkick_start_(false)
-    , show_jump_recoil_(false)
+	, show_jump_recoil_(false)
 {
     player_.AddObserver(this);
     player_.Select("warpin");
@@ -100,24 +110,61 @@ PlayerCharacter::PlayerCharacter(ServerProxy* server)
     state_ = AnimationState::WARPING;
 }
 
+math::Vector2D PlayerCharacter::BulletOffsetForState() const {
+	switch (state_) {
+	
+	case AnimationState::WALKING:
+		return math::Vector2D(17, -21);
+
+	case AnimationState::ON_AIR:
+		return math::Vector2D(18, -27);
+
+	case AnimationState::DASHING:
+		return math::Vector2D(26, -14);
+	
+	case AnimationState::WALLSLIDING:
+		return math::Vector2D(-21, -23);
+
+	case AnimationState::WALLKICKING:
+		return math::Vector2D(16, -27);
+
+	//case AnimationState::WARPING:
+	//case AnimationState::WARP_FINISH:
+	//case AnimationState::STANDING:
+	default:
+		return math::Vector2D(8, -19);
+	}
+}
+
 void PlayerCharacter::Shoot() {
     shoot_anim_ticks_++;
 
-    if (should_shoot_) {
+	auto charge_level = ChargeLevel(shoot_charge_ticks_);
+
+	if ((should_shoot_ || (!holding_shoot_ && charge_level > 0))) {
         should_shoot_ = false;
         shoot_anim_ticks_ = 0;
-		
-		math::Vector2D bullet_offset(8, -19);
-		if (state_ == AnimationState::DASHING) {
-			bullet_offset.x += 16;
-			bullet_offset.y += 4;
-		}
+
+		auto bullet_type = BulletTypeForLevel(charge_level);
+
+		auto bullet_offset = BulletOffsetForState();
 		bullet_offset.x *= direction_;
 
+		int bullet_direction = direction_;
+		if (state_ == AnimationState::WALLSLIDING)
+			bullet_direction *= -1;
+
 		server_->ShootBulletAt(position_ + bullet_offset,
-							   Bullet::Type::X1_LV0,
-							   direction_);
+							   bullet_type,
+							   bullet_direction);
+		
+		shoot_charge_ticks_ = 0;
     }
+
+	if (holding_shoot_)
+		shoot_charge_ticks_++;
+	else
+		shoot_charge_ticks_ = 0;
 }
 
 void PlayerCharacter::Move() {
@@ -244,6 +291,7 @@ void PlayerCharacter::GetPlayerInput() {
 		input_x_axis_ = joystick->GetAxisStatus(0).Percentage();
         holding_jump_ = joystick->IsDown(kJumpJoystickKey);
 		holding_dash_ = joystick->IsDown(kDashJoystickKey);
+		holding_shoot_ = joystick->IsDown(kShootJoystickKey);
 
     } else {
 		const auto& keyboard = ugdk::input::manager()->keyboard();
@@ -263,6 +311,7 @@ void PlayerCharacter::GetPlayerInput() {
 		if (keyboard.IsPressed(input::Scancode::LSHIFT))
 			should_dash_ = true;
 
+		holding_shoot_ = keyboard.IsDown(input::Scancode::Z);
         if (keyboard.IsPressed(input::Scancode::Z))
             should_shoot_ = true;
     }
@@ -468,6 +517,19 @@ void PlayerCharacter::UpdateAnimation()
 		break;
 	default: break;
 	}
+}
+
+int PlayerCharacter::ChargeLevel(int charge_time) {
+	if (charge_time > kBusterLevel1ChargeCount) {
+		return 1;
+	}
+	return 0;
+}
+
+Bullet::Type PlayerCharacter::BulletTypeForLevel(int level) {
+	if (level >= 1)
+		return Bullet::Type::X1_LV1;
+	return Bullet::Type::X1_LV0;
 }
 
 bool PlayerCharacter::on_ground() const

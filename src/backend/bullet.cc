@@ -1,6 +1,8 @@
 
 #include "backend/bullet.h"
 
+#include "backend/serverproxy.h"
+#include "backend/playercharacter.h"
 #include <ugdk/action/scene.h>
 
 namespace backend {
@@ -8,15 +10,16 @@ namespace backend {
 using namespace ugdk;
 
 namespace {
-double kBulletSpeed = 8.0;
+double kBulletLv0Speed = 8.0;
+double kBulletLv1Speed = 10.0;
 int kTicksToLive = 60;
 
-std::string prefix_for(Bullet::Type type) {
+std::tuple<std::string, double> data_for(Bullet::Type type) {
 	switch (type) {
 	case Bullet::Type::X1_LV0:
-		return "x1_lv0_";
+		return std::make_tuple("x1_lv0_", kBulletLv0Speed);
 	case Bullet::Type::X1_LV1:
-		return "x1_lv1_";
+		return std::make_tuple("x1_lv1_", kBulletLv1Speed);
 	default:
 		throw std::exception("Unuspported bullet type.");
 	}
@@ -36,25 +39,44 @@ Bullet::Bullet(const ugdk::math::Vector2D& position, Type type)
 	if (type_ == Type::X1_LV0)
 		state_ = State::LOOP;
 
-	UpdateAnimation();
+	player_offset_x_ = position_.x - ServerProxy::reference()->player_character().position().x;
+	first_update_ = true;
 }
 
 
 void Bullet::Update()
 {
-	switch (state_) {
-	case State::LOOP:
-		position_.x += direction_ * kBulletSpeed;
+	player_.Update(1.0 / 60.0);
 
-		if (++time_alive_ > kTicksToLive) {
-			state_ = State::HIT;
+	auto data = data_for(type_);
+
+	switch (state_) {
+	case State::START:
+		player_.Select(std::get<0>(data) + "start");
+		position_.x = ServerProxy::reference()->player_character().position().x + player_offset_x_;
+		break;
+	case State::PRELOOP:		
+	case State::LOOP:
+		if (state_ == State::PRELOOP)
+			player_.Select(std::get<0>(data) + "preloop");
+		else
+			player_.Select(std::get<0>(data) + "loop");
+		
+		if (!first_update_) {
+			position_.x += direction_ * std::get<1>(data);
+			if (++time_alive_ > kTicksToLive) {
+				state_ = State::HIT;
+			}
 		}
+		
+		break;
+	case State::HIT:
+		player_.Select(std::get<0>(data) + "hit");
 		break;
 	default: break;
 	}
 
-    player_.Update(1.0 / 60.0);
-	UpdateAnimation();
+	first_update_ = false;
 }
 
 void Bullet::Tick() {
@@ -69,24 +91,6 @@ void Bullet::Tick() {
 		break;
 	case State::HIT:
 		finished_ = true;
-		break;
-	default: break;
-	}
-}
-
-void Bullet::UpdateAnimation() {
-	switch(state_) {
-	case State::START:
-		player_.Select(prefix_for(type_) + "start");
-		break;
-	case State::PRELOOP:
-		player_.Select(prefix_for(type_) + "preloop");
-		break;
-	case State::LOOP:
-		player_.Select(prefix_for(type_) + "loop");
-		break;
-	case State::HIT:
-		player_.Select(prefix_for(type_) + "hit");
 		break;
 	default: break;
 	}

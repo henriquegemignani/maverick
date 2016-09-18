@@ -45,7 +45,7 @@ get_data_for(const std::string& animtions_name) {
 		return std::make_tuple(dash_dust_atlas, math::Vector2D(-16, -32));
 
 	} else if (animtions_name == "animations/buster.json") {
-		return std::make_tuple(buster_atlas, math::Vector2D(-32, -32));
+		return std::make_tuple(buster_atlas, math::Vector2D(-16, -32));
 	}
 
 	throw std::exception("unknown animations name");

@@ -7,6 +7,7 @@
 #include <ugdk/system/eventhandler.h>
 #include <ugdk/action/observer.h>
 #include <ugdk/action/spritetypes.h>
+#include "bullet.h"
 
 namespace backend {
 class ServerProxy;
@@ -21,8 +22,9 @@ class PlayerCharacter
 {
 public:
     explicit PlayerCharacter(ServerProxy*);
+	ugdk::math::Vector2D BulletOffsetForState() const;
 
-    enum class AnimationState {
+	enum class AnimationState {
         WARPING,
         WARP_FINISH,
         STANDING,
@@ -56,6 +58,9 @@ private:
     void ApplyVelocity();
     void UpdateAnimation();
 
+	static int ChargeLevel(int charge_time);
+	static Bullet::Type BulletTypeForLevel(int level);
+
     // 
     void Land();
 
@@ -71,10 +76,12 @@ private:
     bool holding_jump_;
 	bool should_dash_;
 	bool holding_dash_;
+	bool should_shoot_;
+	bool holding_shoot_;
     bool dash_jump_;
 	int dash_ticks_;
 	int shoot_anim_ticks_;
-	bool should_shoot_;
+	int shoot_charge_ticks_;
     std::string current_animation_name_;
 
     bool show_dash_start_;

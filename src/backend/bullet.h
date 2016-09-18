@@ -33,12 +33,12 @@ public:
 	Type type() const { return type_; }
 
 private:
-	void UpdateAnimation();
-
     bool finished_;
 	Type type_;
 	int time_alive_;
 	State state_;
+	double player_offset_x_;
+	bool first_update_;
 };
 
 } // namespace backend
