@@ -6,7 +6,7 @@ include (src_list.cmake)
 
 if (UNIX OR MINGW)
     # se for o g++ para *nix ou o MinGW para Windows:
-    add_definitions(-Wall -ansi -U_FORTIFY_SOURCE -std=gnu++11)
+    add_definitions(-Wall -ansi -U_FORTIFY_SOURCE -std=gnu++14)
     if(NOT ANDROID)
         add_definitions(-msse2)
     endif()

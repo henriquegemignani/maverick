@@ -16,7 +16,7 @@ std::string animation_table_name_for_type(Effect::Type type) {
 	case Effect::Type::DASH_DUST:
 		return "animations/dash_dust.json";
 	default:
-		throw std::exception("Unknown type.");
+		throw std::invalid_argument("Unknown type.");
 	}
 }
 }

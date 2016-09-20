@@ -48,7 +48,7 @@ get_data_for(const std::string& animtions_name) {
 		return std::make_tuple(buster_atlas, math::Vector2D(-16, -32));
 	}
 
-	throw std::exception("unknown animations name");
+	throw std::invalid_argument("unknown animations name");
 }
 
 }

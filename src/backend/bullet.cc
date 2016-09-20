@@ -21,7 +21,7 @@ std::tuple<std::string, double> data_for(Bullet::Type type) {
 	case Bullet::Type::X1_LV1:
 		return std::make_tuple("x1_lv1_", kBulletLv1Speed);
 	default:
-		throw std::exception("Unuspported bullet type.");
+		throw std::invalid_argument("Unuspported bullet type.");
 	}
 }
 }
