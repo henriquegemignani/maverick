@@ -1,4 +1,4 @@
-CMAKE_MINIMUM_REQUIRED(VERSION 3.0)
+CMAKE_MINIMUM_REQUIRED(VERSION 3.1)
 cmake_policy(VERSION 3.3.0)
 cmake_policy(SET CMP0054 NEW)
 PROJECT(maverick CXX C)
@@ -36,6 +36,13 @@ set(UGDK_CREATE_BINDINGS OFF CACHE BOOL "Set to ON to generate bindings for supp
 add_definitions(-DEMBBEDED_UGDK="${CMAKE_CURRENT_BINARY_DIR}/externals/ugdk")
 add_subdirectory(externals/ugdk EXCLUDE_FROM_ALL)
 include_directories(${UGDK_EXTERNAL_INCLUDE_DIRS})
+
+add_subdirectory(externals/ugdk/externals/lua-5.1 EXCLUDE_FROM_ALL)
+add_library(sol INTERFACE)
+target_include_directories(sol INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/externals/sol/include)
+target_sources(sol INTERFACE 
+  ${CMAKE_CURRENT_SOURCE_DIR}/externals/sol/include/sol.hpp
+)
 
 set(MAVERICK_DATA_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../maverick-data/game_data" CACHE STRING "Where the data is located.")
 add_definitions(-DMAVERICK_DATA_PATH="${MAVERICK_DATA_PATH}")

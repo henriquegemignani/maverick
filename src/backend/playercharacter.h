@@ -9,6 +9,8 @@
 #include <ugdk/action/spritetypes.h>
 #include "bullet.h"
 
+#include <sol.hpp>
+
 namespace backend {
 class ServerProxy;
 
@@ -36,6 +38,7 @@ public:
     };
 
     void Update();
+	void SetupCollision();
 
     void HandleNewJoystick(std::shared_ptr<ugdk::input::Joystick>);
     void Handle(const ugdk::input::JoystickDisconnectedEvent& ev) override;
@@ -90,6 +93,7 @@ private:
 	bool show_wall_touch_;
     bool show_wallkick_start_;
     bool show_jump_recoil_;
+	sol::table collision_body_;
 };
 
 } // namespace backend

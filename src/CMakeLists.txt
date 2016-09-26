@@ -32,7 +32,7 @@ include_directories (${CMAKE_CURRENT_BINARY_DIR})
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 
 add_ugdk_executable(maverick ${GAME_SRCS})
-target_link_libraries(maverick PUBLIC tiled-reader)
+target_link_libraries(maverick PUBLIC tiled-reader lua sol)
 
 # set(maverick_DATA_PATH "${CMAKE_SOURCE_DIR}/data")
 

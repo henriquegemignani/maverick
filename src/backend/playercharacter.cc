@@ -9,6 +9,7 @@
 #include <algorithm>
 
 #include "backend/serverproxy.h"
+#include "backend/collision.h"
 
 namespace backend {
   
@@ -25,6 +26,16 @@ namespace {
 			: col(static_cast<int>(x / map->tile_width()))
 			, row(static_cast<int>(y / map->tile_height()))
 		{}
+
+		bool IsInteriorX(const tiled::Map* map, const math::Vector2D& pos) const {
+			return pos.x > col * map->tile_width()
+				&& pos.x < (col + 1) * map->tile_width();
+		}
+
+		bool IsInteriorY(const tiled::Map* map, const math::Vector2D& pos) const {
+			return pos.y > row * map->tile_height()
+				&& pos.y < (row + 1) * map->tile_height();
+		}
 	};
 	bool get_bool_property(const tiled::PropertyMap& map, const std::string& name) {
 		auto f = map.find(name);
@@ -46,7 +57,7 @@ namespace {
 		return false;
 	}
 
-	double tile_corner_x(const tiled::Map* map, const TileCoords& tile_pos, double direction)
+	double tile_corner_x(const tiled::Map* map, const TileCoords& tile_pos, int direction)
 	{
 		int x = tile_pos.col;
 		if (direction > 0)
@@ -54,7 +65,7 @@ namespace {
 		return x * map->tile_width();
 	}
 
-	double tile_corner_y(const tiled::Map* map, const TileCoords& tile_pos, double direction)
+	double tile_corner_y(const tiled::Map* map, const TileCoords& tile_pos, int direction)
 	{
 		int y = tile_pos.row;
 		if (direction > 0)
@@ -204,8 +215,11 @@ void PlayerCharacter::Move() {
 
 void PlayerCharacter::Update()
 {
-    if (position_.y > 1000)
-        position_.y = 0.0;
+    if (position_.y > 1000) {
+		position_.y = 0.0;
+		auto& L = server_->collision().lua();
+		L["world"]["update"](L["world"], collision_body_, position_.x - 4, position_.y - 16);
+    }
     GetPlayerInput();
     Move();
     Dash();
@@ -214,6 +228,12 @@ void PlayerCharacter::Update()
     ApplyGravity();
     ApplyVelocity();
 	UpdateAnimation();
+}
+
+void PlayerCharacter::SetupCollision() {
+	auto& L = server_->collision().lua();
+	collision_body_ = L.create_table_with("name", "Player");
+	L["world"]["add"](L["world"], collision_body_, position_.x - 4, position_.y - 16, width_, 16);
 }
 
 void PlayerCharacter::HandleNewJoystick(std::shared_ptr<ugdk::input::Joystick> joystick)
@@ -327,20 +347,89 @@ void PlayerCharacter::ApplyGravity()
 
 void PlayerCharacter::ApplyVelocity()
 {
+	math::Vector2D offset(4, 16);
+	auto new_pos = position_ + velocity_ - offset;
+
+	auto& L = server_->collision().lua();
+	std::tuple<double, double, sol::object, sol::object> results =
+		L["world"]["move"](L["world"], collision_body_, new_pos.x, new_pos.y);
+
+	math::Vector2D actual_new_pos(std::get<0>(results), std::get<1>(results));
+
+	position_ = actual_new_pos + offset;
+
+	auto cols = std::get<2>(results).as<sol::table>();
+	int count = static_cast<int>(std::get<3>(results).as<int>());
+
+	for (auto i = 0; i < count; ++i) {
+		sol::table collision = cols[i + 1];
+		math::Vector2D normal(collision["normal"]["x"], collision["normal"]["y"]);
+
+		if (normal.x != 0) {
+			if (count > 1) {
+				velocity_.x = 0.0;
+				if (state_ == AnimationState::WALKING)
+					state_ = AnimationState::STANDING;
+
+			} else if (velocity_.y > 0.0) {
+				if (state_ != AnimationState::WALLSLIDING) {
+					show_wall_touch_ = true;
+				}
+				state_ = AnimationState::WALLSLIDING;
+				dash_jump_ = false;
+				velocity_.y = kWallSlidingSpeed;
+			}
+		}
+
+		if (normal.y != 0) {
+			velocity_.y = 0.0;
+			if (normal.y < 0.0 && !on_ground())
+				Land();
+		}
+	}
+
+	if (count == 0) {
+		switch (state_) {
+		case AnimationState::WALLKICKING: break;
+		case AnimationState::WARPING: break;
+		case AnimationState::WARP_FINISH: break;
+		case AnimationState::ON_AIR: break;
+		
+		case AnimationState::STANDING:
+		case AnimationState::WALKING:
+		case AnimationState::DASHING:
+		case AnimationState::WALLSLIDING:
+			state_ = AnimationState::ON_AIR;
+		}
+	}
+
+	return;
+
 	auto map = server_->map();
 
 	// Movement in X
 	auto xDirection = sgn(velocity_.x);
 	auto cornerX = position_.x + xDirection * width_ / 2;
 	auto cornerXwithVel = cornerX + velocity_.x;
+	auto x_to_move = std::abs(velocity_.x);
+	auto found_wall_x = false;
 
-	TileCoords tile_pos_x(map, cornerXwithVel, position_.y);
-	double x_to_move = velocity_.x;
-	if (is_solid(map, tile_pos_x)) {
-		double tile_corner = tile_corner_x(map, tile_pos_x, -xDirection);
-		double tile_distance = std::abs(tile_corner - cornerX);
-		x_to_move = xDirection * std::min(tile_distance, std::abs(velocity_.x));
+	std::vector<math::Vector2D> possible_tiles_x = {
+		{cornerXwithVel, position_.y - map->tile_height()},
+		{cornerXwithVel, position_.y},
+	};
 
+	for (const auto& pos : possible_tiles_x) {
+		TileCoords tile_pos(map, pos.x, pos.y);
+		if (is_solid(map, tile_pos)) {
+			found_wall_x = true;
+			auto tile_corner = tile_corner_x(map, tile_pos, -xDirection);
+			auto tile_distance = std::abs(tile_corner - cornerX);
+			x_to_move = std::min(tile_distance, x_to_move);
+		}
+	}
+
+	if (found_wall_x) {
         if (on_ground()) {
             velocity_.x = 0.0;
             state_ = AnimationState::STANDING;
@@ -356,27 +445,42 @@ void PlayerCharacter::ApplyVelocity()
 	} else if (state_ == AnimationState::WALLSLIDING) {
 		state_ = AnimationState::ON_AIR;
 	}
-	position_.x += x_to_move;
+	
+	position_.x += xDirection * x_to_move;
 
 	// Movement in Y
 	auto yDirection = sgn(velocity_.y);
-	auto cornerY = position_.y + yDirection * 0.5;
+	auto cornerY = position_.y + 1.0/4.0;
 	auto cornerYwithVel = cornerY + velocity_.y;
 
-	TileCoords tile_pos_y(map, position_.x, cornerYwithVel);
-	double y_to_move = velocity_.y;
-	if (is_solid(map, tile_pos_y)) {
-		double tile_corner = tile_corner_y(map, tile_pos_y, -yDirection);
-		double tile_distance = std::abs(tile_corner - cornerY);
-		y_to_move = yDirection * std::min(tile_distance, std::abs(velocity_.y));
+	auto y_to_move = std::abs(velocity_.y);
+	auto found_wall_y = false;
 
+	std::vector<math::Vector2D> possible_tiles_y = {
+		{ position_.x - width_ / 2 + 1/4, cornerYwithVel },
+		{ position_.x + width_ / 2 - 1/4, cornerYwithVel },
+	};
+
+	for (const auto& pos : possible_tiles_y) {
+		TileCoords tile_pos(map, pos.x, pos.y);
+		if (is_solid(map, tile_pos)) {
+			found_wall_y = true;
+			auto tile_corner = tile_corner_y(map, tile_pos, -yDirection);
+			auto tile_distance = std::abs(tile_corner - cornerY);
+			y_to_move = std::min(tile_distance, y_to_move);
+		}
+	}
+
+	
+	if (found_wall_y) {
 		velocity_.y = 0.0;
 		if (!on_ground())
 			Land();
 	} else if (on_ground()) {
 		state_ = AnimationState::ON_AIR;
 	}
-	position_.y += y_to_move;
+
+	position_.y += yDirection * y_to_move;
 }
 
 void PlayerCharacter::Jump() {

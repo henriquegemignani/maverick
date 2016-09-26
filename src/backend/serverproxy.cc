@@ -6,6 +6,7 @@
 #include <ugdk/filesystem/module.h>
 #include "playercharacter.h"
 #include <ugdk/input/module.h>
+#include "backend/collision.h"
 
 namespace backend {
 
@@ -14,13 +15,13 @@ using namespace ugdk;
 struct ServerProxyImpl {
 	explicit ServerProxyImpl(ServerProxy*);
 
+	Collision collision_;
 	std::unique_ptr<server::PlatformingCore> core_;
     PlayerCharacter player_character_;
     bool frame_stepping_;
     std::list<Effect> effects_;
 	std::list<Bullet> bullets_;
-
-    void Tick();
+	void Tick();
 };
 
 std::unique_ptr<tiled::Map> load_map() {
@@ -83,6 +84,10 @@ const std::list<Bullet>& ServerProxy::bullets() const {
 	return impl_->bullets_;
 }
 
+Collision& ServerProxy::collision() {
+	return impl_->collision_;
+}
+
 void ServerProxy::AddEffectAt(const ugdk::math::Vector2D& position, Effect::Type type) {
 	impl_->effects_.emplace_back(position, type);
 }
@@ -99,7 +104,30 @@ void ServerProxy::ShootBulletAt(const ugdk::math::Vector2D& position, Bullet::Ty
 
 ServerProxy::ServerProxy()
     : impl_(new ServerProxyImpl(this))
-{}
+{
+	impl_->player_character_.SetupCollision();
+	
+	auto _map = map();
+	auto& L = impl_->collision_.lua();
+	auto& layer = _map->layers()[0];
+
+	for (auto col = 0; col < layer.width(); ++col) {
+		for (auto row = 0; row < layer.height(); ++row) {
+			auto tile = layer.tile_at(col, row);
+			
+			auto& properties = _map->tileproperties_for(tile);
+			auto f = properties.find("solid");
+			if (f != properties.end() && f->second.bool_value()) {
+				L["world"]["add"](L["world"],
+								  L.create_table(),
+								  col * _map->tile_width(),
+								  row * _map->tile_height(),
+								  _map->tile_width(),
+								  _map->tile_height());
+			}
+		}
+	}
+}
 
 ServerProxy::~ServerProxy() {}
 

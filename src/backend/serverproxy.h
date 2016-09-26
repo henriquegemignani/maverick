@@ -11,6 +11,7 @@
 namespace backend {
 class PlayerCharacter;
 struct ServerProxyImpl;
+class Collision;
 
 class ServerProxy {
 public:
@@ -22,6 +23,7 @@ public:
     PlayerCharacter& player_character();
     const std::list<Effect>& effects() const;
 	const std::list<Bullet>& bullets() const;
+	Collision& collision();
 
 	void AddEffectAt(const ugdk::math::Vector2D& position, Effect::Type);
     void AddEffectAt(const ugdk::math::Vector2D& position, Effect::Type, int direction);

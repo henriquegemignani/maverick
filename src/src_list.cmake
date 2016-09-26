@@ -3,6 +3,8 @@ SET(GAME_SRCS
     backend/animatedobject.h 
     backend/bullet.cc 
     backend/bullet.h 
+    backend/collision.cc 
+    backend/collision.h 
     backend/effect.cc 
     backend/effect.h 
     backend/playercharacter.cc 
