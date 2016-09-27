@@ -77,6 +77,8 @@ void ObjectViewer::RenderAnimatedObject(ugdk::graphic::Canvas& canvas, const bac
 
 	auto atlas = std::get<0>(data);
 	auto&& frame = object.player().current_animation_frame();
+	if (!frame.effect().visible())
+		return;
 	auto&& piece = atlas->PieceAt(frame.atlas_frame_name());
 	//primitive_.set_visualeffect(frame.effect());
 
