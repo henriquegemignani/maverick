@@ -351,15 +351,15 @@ void PlayerCharacter::ApplyVelocity()
 	auto new_pos = position_ + velocity_ - offset;
 
 	auto& L = server_->collision().lua();
-	std::tuple<double, double, sol::object, sol::object> results =
+	std::tuple<double, double, sol::table, int> results =
 		L["world"]["move"](L["world"], collision_body_, new_pos.x, new_pos.y);
 
 	math::Vector2D actual_new_pos(std::get<0>(results), std::get<1>(results));
 
 	position_ = actual_new_pos + offset;
 
-	auto cols = std::get<2>(results).as<sol::table>();
-	int count = static_cast<int>(std::get<3>(results).as<int>());
+	auto cols = std::get<2>(results);
+	auto count = std::get<3>(results);
 
 	for (auto i = 0; i < count; ++i) {
 		sol::table collision = cols[i + 1];
