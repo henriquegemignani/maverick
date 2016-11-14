@@ -45,11 +45,11 @@ std::unique_ptr<ugdk::action::Scene> GameViewerScene() {
 	});
 
     scene->event_handler().AddListener<ugdk::input::JoystickConnectedEvent>([=](const ugdk::input::JoystickConnectedEvent& ev) {
-        server_proxy->player_character().HandleNewJoystick(ev.joystick.lock());
+        server_proxy->HandleNewJoystick(ev.joystick.lock());
     });
     auto joysticks = ugdk::input::manager()->CurrentJoysticks();
     if (!joysticks.empty()) {
-        server_proxy->player_character().HandleNewJoystick(joysticks.front());
+        server_proxy->HandleNewJoystick(joysticks.front());
     }
 
     scene->AddTask([](double dt) {

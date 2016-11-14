@@ -2,10 +2,6 @@
 #include "backend/playercharacter.h"
 
 #include <ugdk/action/scene.h>
-#include <ugdk/resource/module.h>
-#include <ugdk/input/events.h>
-#include <ugdk/input/module.h>
-#include <ugdk/input/joystick.h>
 #include <algorithm>
 
 #include "backend/serverproxy.h"
@@ -213,14 +209,14 @@ void PlayerCharacter::Move() {
     }
 }
 
-void PlayerCharacter::Update()
+void PlayerCharacter::Update(const FrameInput& input)
 {
     if (position_.y > 1000) {
 		position_.y = 0.0;
 		auto& L = server_->collision().lua();
 		L["world"]["update"](L["world"], collision_body_, position_.x - 4, position_.y - 16);
     }
-    GetPlayerInput();
+    GetPlayerInput(input);
     Move();
     Dash();
 	Jump();
@@ -234,38 +230,6 @@ void PlayerCharacter::SetupCollision() {
 	auto& L = server_->collision().lua();
 	collision_body_ = L.create_table_with("name", "Player");
 	L["world"]["add"](L["world"], collision_body_, position_.x - 4, position_.y - 16, width_, 16);
-}
-
-void PlayerCharacter::HandleNewJoystick(std::shared_ptr<ugdk::input::Joystick> joystick)
-{
-    joystick->event_handler().AddObjectListener(this);
-    current_joystick_ = joystick;
-}
-
-void PlayerCharacter::Handle(const ugdk::input::JoystickDisconnectedEvent& ev) {
-    if (auto joystick = ev.joystick.lock()) {
-        joystick->event_handler().RemoveObjectListener(this);
-    }
-    current_joystick_.reset();
-}
-
-void PlayerCharacter::Handle(const ugdk::input::JoystickAxisEvent& ev) {
-
-}
-
-void PlayerCharacter::Handle(const ugdk::input::JoystickButtonPressedEvent& ev) {
-    if (ev.button == kJumpJoystickKey) {
-		should_jump_ = true;
-    }
-	if (ev.button == kDashJoystickKey)
-		should_dash_ = true;
-
-    if (ev.button == kShootJoystickKey)
-        should_shoot_ = true;
-}
-
-void PlayerCharacter::Handle(const ugdk::input::JoystickButtonReleasedEvent& ev) {
-
 }
 
 void PlayerCharacter::Tick() {
@@ -306,35 +270,15 @@ void PlayerCharacter::Tick() {
     }
 }
 
-void PlayerCharacter::GetPlayerInput() {
-    if (auto joystick = current_joystick_.lock()) {
-		input_x_axis_ = joystick->GetAxisStatus(0).Percentage();
-        holding_jump_ = joystick->IsDown(kJumpJoystickKey);
-		holding_dash_ = joystick->IsDown(kDashJoystickKey);
-		holding_shoot_ = joystick->IsDown(kShootJoystickKey);
+void PlayerCharacter::GetPlayerInput(const FrameInput& input) {
+	should_jump_ = should_jump_ || (!holding_jump_ && input.holding_jump);
+	should_dash_ = should_dash_ || (!holding_dash_ && input.holding_dash);
+	should_shoot_ = should_shoot_ || (!holding_shoot_ && input.holding_shoot);
 
-    } else {
-		const auto& keyboard = ugdk::input::manager()->keyboard();
-		if (keyboard.IsDown(input::Scancode::D) || keyboard.IsDown(input::Scancode::RIGHT)) {
-			input_x_axis_ = 1.0;
-		} else if (keyboard.IsDown(input::Scancode::A) || keyboard.IsDown(input::Scancode::LEFT)) {
-			input_x_axis_ = -1.0;
-		} else {
-			input_x_axis_ = 0.0;
-		}
-
-        holding_jump_ = keyboard.IsDown(input::Scancode::SPACE);
-		if (keyboard.IsPressed(input::Scancode::SPACE))
-			should_jump_ = true;
-
-		holding_dash_ = keyboard.IsDown(input::Scancode::LSHIFT);
-		if (keyboard.IsPressed(input::Scancode::LSHIFT))
-			should_dash_ = true;
-
-		holding_shoot_ = keyboard.IsDown(input::Scancode::Z);
-        if (keyboard.IsPressed(input::Scancode::Z))
-            should_shoot_ = true;
-    }
+	input_x_axis_ = input.x_axis;
+	holding_jump_= input.holding_jump;
+	holding_dash_ = input.holding_dash;
+	holding_shoot_ = input.holding_shoot;
 }
 
 void PlayerCharacter::ApplyGravity()

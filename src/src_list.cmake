@@ -7,6 +7,11 @@ SET(GAME_SRCS
     backend/collision.h 
     backend/effect.cc 
     backend/effect.h 
+    backend/frameinput.cc 
+    backend/frameinput.h 
+    backend/frameinputsource.h 
+    backend/frameinputsourcejoystick.h 
+    backend/frameinputsourcekeyboard.h 
     backend/playercharacter.cc 
     backend/playercharacter.h 
     backend/serverproxy.cc 

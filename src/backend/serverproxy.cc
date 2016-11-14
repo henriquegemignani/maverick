@@ -1,11 +1,14 @@
 
 #include "backend/serverproxy.h"
 
+#include <ugdk/input/module.h>
+#include <ugdk/filesystem/module.h>
+
 #include "server/platformingcore.h"
 #include "backend/ugdktiledfileloader.h"
-#include <ugdk/filesystem/module.h>
-#include "playercharacter.h"
-#include <ugdk/input/module.h>
+#include "backend/playercharacter.h"
+#include "backend/frameinputsource.h"
+#include "backend/frameinputsourcekeyboard.h"
 #include "backend/collision.h"
 
 namespace backend {
@@ -21,6 +24,8 @@ struct ServerProxyImpl {
     bool frame_stepping_;
     std::list<Effect> effects_;
 	std::list<Bullet> bullets_;
+	std::unique_ptr<FrameInputSource> frame_input_source_;
+
 	void Tick();
 };
 
@@ -32,6 +37,7 @@ ServerProxyImpl::ServerProxyImpl(ServerProxy* proxy)
 	: core_(new server::PlatformingCore(load_map()))
     , player_character_(proxy)
     , frame_stepping_(false)
+	, frame_input_source_(new FrameInputSourceKeyboard)
 {}
 
 void ServerProxyImpl::Tick() {
@@ -41,7 +47,7 @@ void ServerProxyImpl::Tick() {
     if (frame_stepping_ && !input::manager()->keyboard().IsPressed(input::Scancode::F))
         return;
 
-    player_character_.Update();
+    player_character_.Update(frame_input_source_->NextFrameInput());
     
 	for (auto& obj : effects_)
 		obj.Update();
@@ -130,5 +136,9 @@ ServerProxy::ServerProxy()
 }
 
 ServerProxy::~ServerProxy() {}
+
+void ServerProxy::HandleNewJoystick(const std::shared_ptr<ugdk::input::Joystick>& joystick)
+{
+}
 
 } // namespace frontend

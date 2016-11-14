@@ -16,6 +16,7 @@ class Collision;
 class ServerProxy {
 public:
 	~ServerProxy();
+	void HandleNewJoystick(const std::shared_ptr<ugdk::input::Joystick>& joystick);
 	static ServerProxy* reference();
 	
     void Tick();
