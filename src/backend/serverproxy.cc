@@ -139,6 +139,7 @@ ServerProxy::~ServerProxy() {}
 
 void ServerProxy::HandleNewJoystick(const std::shared_ptr<ugdk::input::Joystick>& joystick)
 {
+	// TODO
 }
 
 } // namespace frontend
