@@ -11,7 +11,7 @@ class UgdkTiledFileLoader : public tiled::FileLoader {
 public:
     class UgdkFile : public tiled::FileLoader::File {
     public:
-        UgdkFile(std::unique_ptr<ugdk::filesystem::File> file);
+        explicit UgdkFile(std::unique_ptr<ugdk::filesystem::File> file);
 
         ugdk::filesystem::File& ugdk_file() const {
             return *ugdk_file_;

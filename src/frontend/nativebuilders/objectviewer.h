@@ -2,6 +2,7 @@
 #define MAVERICK_FRONTEND_NATIVEBUILDERS_EFFECTVIEWER_H_
 
 #include "backend/serverproxy.h"
+#include "backend/atlasobject.h"
 #include <ugdk/graphic/sprite.h>
 #include <ugdk/graphic/primitive.h>
 
@@ -15,7 +16,7 @@ public:
     void Render(ugdk::graphic::Canvas&);
 
 private:
-	void RenderAnimatedObject(ugdk::graphic::Canvas&, const backend::AnimatedObject&);
+	void RenderPlayer(ugdk::graphic::Canvas&, const backend::PlayerCharacter&);
 
     backend::ServerProxy* server_;
     ugdk::graphic::Primitive primitive_;

@@ -6,15 +6,9 @@
 
 namespace backend {
   
-using namespace ugdk;
-
-
 AnimatedObject::AnimatedObject(const std::string& animations_name, const ugdk::math::Vector2D& position)
-    : direction_(1)
-    , position_(position)
+    : AtlasObject(animations_name, position)
 	, player_(ugdk::resource::GetSpriteAnimationTableFromFile(animations_name))
-	, animations_name_(animations_name)
 {}
-
 
 } // namespace frontend

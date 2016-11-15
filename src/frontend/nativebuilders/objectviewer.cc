@@ -22,6 +22,7 @@ graphic::TextureAtlas* x_atlas = nullptr;
 graphic::TextureAtlas* dust_atlas = nullptr;
 graphic::TextureAtlas* dash_dust_atlas = nullptr;
 graphic::TextureAtlas* buster_atlas = nullptr;
+graphic::TextureAtlas* buster_charge_atlas = nullptr;
 
 void populate_atlas() {
 	if (x_atlas) return;
@@ -30,6 +31,7 @@ void populate_atlas() {
 	dust_atlas = resource::GetTextureAtlasFromFile("spritesheets/dust");
 	dash_dust_atlas = resource::GetTextureAtlasFromFile("spritesheets/dash_dust");
 	buster_atlas = resource::GetTextureAtlasFromFile("spritesheets/buster");
+	buster_charge_atlas = resource::GetTextureAtlasFromFile("spritesheets/buster-charge");
 }
 
 std::tuple<graphic::TextureAtlas*, math::Vector2D>
@@ -46,9 +48,45 @@ get_data_for(const std::string& animtions_name) {
 
 	} else if (animtions_name == "animations/buster.json") {
 		return std::make_tuple(buster_atlas, math::Vector2D(-16, -32));
+
+	} else if (animtions_name == "animations/buster-charge.json") {
+		return std::make_tuple(buster_charge_atlas, math::Vector2D(-4.5, -4.5));
 	}
 
 	throw std::invalid_argument("unknown animations name");
+}
+
+
+template<class Callable>
+void RenderAnimatedObject(ugdk::graphic::Canvas& canvas, const backend::AtlasObject& object,
+						  ugdk::graphic::Primitive& primitive, Callable post_render) {
+	auto data = get_data_for(object.animations_name());
+
+	auto atlas = std::get<0>(data);
+	auto&& frame = object.CurrentAnimationFrame();
+	if (!frame.effect().visible())
+		return;
+	auto&& piece = atlas->PieceAt(frame.atlas_frame_name());
+	//primitive_.set_visualeffect(frame.effect());
+
+	graphic::VertexDataManipulation::SetUsingSpriteFrameInformation(*primitive.vertexdata(), math::Vector2D(), frame, piece);
+
+	// Send the texture to the GPU
+	auto sprite_unit = ugdk::graphic::manager()->ReserveTextureUnit(atlas->texture());
+	canvas.SendUniform("drawable_texture", sprite_unit);
+
+	canvas.PushAndCompose(
+		math::Geometry(
+			object.position(),
+			math::Vector2D(object.direction(), 1)
+		));
+	canvas.PushAndCompose(math::Geometry(std::get<1>(data)));
+	graphic::PrimitiveSetup::Sprite::Render(primitive, canvas);
+	canvas.PopGeometry();
+
+	post_render();
+
+	canvas.PopGeometry();
 }
 
 }
@@ -63,40 +101,22 @@ ObjectViewer::ObjectViewer(backend::ServerProxy* server)
 
 void ObjectViewer::Render(ugdk::graphic::Canvas & canvas)
 {
-	RenderAnimatedObject(canvas, server_->player_character());
+	RenderPlayer(canvas, server_->player_character());
+
 	for (const auto& obj : server_->effects()) {
-		RenderAnimatedObject(canvas, obj);
+		RenderAnimatedObject(canvas, obj, primitive_, [] {});
 	}
 	for (const auto& obj : server_->bullets()) {
-		RenderAnimatedObject(canvas, obj);
+		RenderAnimatedObject(canvas, obj, primitive_, [] {});
 	}
 }
 
-void ObjectViewer::RenderAnimatedObject(ugdk::graphic::Canvas& canvas, const backend::AnimatedObject& object) {
-	auto data = get_data_for(object.animations_name());
-
-	auto atlas = std::get<0>(data);
-	auto&& frame = object.player().current_animation_frame();
-	if (!frame.effect().visible())
-		return;
-	auto&& piece = atlas->PieceAt(frame.atlas_frame_name());
-	//primitive_.set_visualeffect(frame.effect());
-
-	graphic::VertexDataManipulation::SetUsingSpriteFrameInformation(*primitive_.vertexdata(), math::Vector2D(), frame, piece);
-
-	// Send the texture to the GPU
-	auto sprite_unit = ugdk::graphic::manager()->ReserveTextureUnit(atlas->texture());
-	canvas.SendUniform("drawable_texture", sprite_unit);
-
-	canvas.PushAndCompose(
-		math::Geometry(
-			object.position(),
-			math::Vector2D(object.direction(), 1)
-		));
-	canvas.PushAndCompose(math::Geometry(std::get<1>(data)));
-	graphic::PrimitiveSetup::Sprite::Render(primitive_, canvas);
-	canvas.PopGeometry();
-	canvas.PopGeometry();
+void ObjectViewer::RenderPlayer(ugdk::graphic::Canvas& canvas, const backend::PlayerCharacter& player) {
+	auto x = player.charge_sprites();
+	RenderAnimatedObject(canvas, player, primitive_, [&] {
+		for (const auto& child : player.charge_sprites())
+			RenderAnimatedObject(canvas, child, primitive_, [] {});
+	});
 }
 
 } // namespace frontend

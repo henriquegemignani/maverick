@@ -6,12 +6,26 @@
 #include <ugdk/action/observer.h>
 #include <ugdk/action/spritetypes.h>
 #include "backend/bullet.h"
+#include "backend/effect.h"
 #include "backend/frameinput.h"
 
 #include <sol.hpp>
 
 namespace backend {
 class ServerProxy;
+
+class ChargeSprites : public AtlasObject {
+public:
+	ChargeSprites(const std::string& animations_name, const ugdk::math::Vector2D& position, const std::string& frame_name)
+		: AtlasObject(animations_name, position)
+		, frame_name_(frame_name)
+	{}
+
+	ugdk::action::SpriteAnimationFrame CurrentAnimationFrame() const override;
+
+private:
+	std::string frame_name_;
+};
 
 class PlayerCharacter 
     : public AnimatedObject
@@ -39,6 +53,8 @@ public:
 
     ugdk::action::SpriteAnimationPlayer& player() { return player_; }
 	bool on_ground() const;
+
+	const std::vector<ChargeSprites>& charge_sprites() const;
 
 private:
     // Update body
