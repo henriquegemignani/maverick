@@ -30,7 +30,10 @@ public:
     }
 
     action::SpriteAnimationFrame CurrentAnimationFrame() const override {
-        return action::SpriteAnimationFrame(frame_name_);
+        auto ret = action::SpriteAnimationFrame(frame_name_);
+        if (frame_name_ == "x1_lv1_2.png")
+            ret.geometry().set_offset(math::Vector2D(-0.5, -0.5));
+        return ret;
     }
 
 private:
@@ -98,7 +101,7 @@ get_data_for(const std::string& animtions_name) {
 		return std::make_tuple(buster_atlas, math::Vector2D(-16, -32));
 
 	} else if (animtions_name == "animations/buster-charge.json") {
-		return std::make_tuple(buster_charge_atlas, math::Vector2D(-4.5, -4.5));
+		return std::make_tuple(buster_charge_atlas, math::Vector2D(-4.5, -20.5));
 	}
 
 	throw std::invalid_argument("unknown animations name");
@@ -122,7 +125,7 @@ void RenderAnimatedObject(ugdk::graphic::Canvas& canvas, const backend::AtlasObj
 	canvas.PushAndCompose(math::Geometry(std::get<1>(data)));
 	graphic::immediate::Rectangle(canvas, math::Vector2D(), atlas, frame);
 	canvas.PopGeometry();
-	post_render(canvas);
+    post_render(canvas);
 	canvas.PopGeometry();
 }
 
