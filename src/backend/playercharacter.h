@@ -14,19 +14,6 @@
 namespace backend {
 class ServerProxy;
 
-class ChargeSprites : public AtlasObject {
-public:
-	ChargeSprites(const std::string& animations_name, const ugdk::math::Vector2D& position, const std::string& frame_name)
-		: AtlasObject(animations_name, position)
-		, frame_name_(frame_name)
-	{}
-
-	ugdk::action::SpriteAnimationFrame CurrentAnimationFrame() const override;
-
-private:
-	std::string frame_name_;
-};
-
 class PlayerCharacter 
     : public AnimatedObject
     , public ugdk::action::Observer
@@ -53,8 +40,9 @@ public:
 
     ugdk::action::SpriteAnimationPlayer& player() { return player_; }
 	bool on_ground() const;
+    int shoot_charge_ticks() const { return shoot_charge_ticks_; }
 
-	const std::vector<ChargeSprites>& charge_sprites() const;
+    static int ChargeLevel(int charge_time);
 
 private:
     // Update body
@@ -67,7 +55,6 @@ private:
     void ApplyVelocity();
     void UpdateAnimation();
 
-	static int ChargeLevel(int charge_time);
 	static Bullet::Type BulletTypeForLevel(int level);
 
     // 

@@ -6,13 +6,12 @@
 
 #include "backend/serverproxy.h"
 #include "backend/collision.h"
-#include "ugdktiledfileloader.h"
-#include "libjson.h"
-#include "tiled-reader/exceptions.h"
+#include "backend/gameconstants.h"
 
 namespace backend {
   
 using namespace ugdk;
+using namespace constants;
 
 namespace {
 	struct TileCoords
@@ -75,64 +74,6 @@ namespace {
 	template <typename T> int sgn(T val) {
 		return (T(0) < val) - (val < T(0));
 	}
-	
-	const double kGravity = 0.25;
-	const double kTerminalSpeed = 5.75;
-	const double kJumpSpeed = 5.0;
-	const double kWalkingSpeed = 1.5;
-	const double kWallSlidingSpeed = 2.0;
-    const double kWallKickJumpSpeed = 4.0;
-	const double kDashingSpeed = 3.5;
-	const int kDashLength = 33;
-	const int kShootAnimationLength = 16;
-	const int kBusterLevel1ChargeCount = 20;
-	const int kBusterLevel2ChargeCount = 80;
-	const int kBusterLevel3ChargeCount = 140;
-	const int kBusterLevel4ChargeCount = 200;
-	
-	const std::array<int, 5> kBusterLevelChargeCount = {
-		0, 
-		kBusterLevel1ChargeCount,
-		kBusterLevel2ChargeCount,
-		kBusterLevel3ChargeCount,
-		kBusterLevel4ChargeCount
-	};
-
-	std::array<std::vector<std::vector<ChargeSprites>>, 5> k_charge_sprites;
-	bool k_charge_sprites_valid = false;
-
-	void initialize_charge_sprites() {
-		if (k_charge_sprites_valid)
-			return;
-
-		auto loader = UgdkTiledFileLoader();
-		
-		auto contents = json_string(loader.GetContents(loader.OpenFile("x1-charge.json")).c_str());
-		if (!libjson::is_valid(contents))
-			throw tiled::BaseException("Invalid json: x1-charge.json\n");
-
-		auto json_root = libjson::parse(contents);
-
-		k_charge_sprites[0].clear();
-		k_charge_sprites[0].emplace_back();
-
-		k_charge_sprites[1].clear();
-		
-		auto lv1 = json_root["lv1"];
-		for (auto animation_frame : lv1) {
-			k_charge_sprites[1].emplace_back();
-			for (auto effect : animation_frame["effects"]) {
-				math::Vector2D position(effect["position"].at(0).as_float(), effect["position"].at(1).as_float());
-				k_charge_sprites[1].back().emplace_back("animations/buster-charge.json", position, effect["name"].as_string());
-			}
-		}
-
-		k_charge_sprites_valid = true;
-	}
-}
-
-ugdk::action::SpriteAnimationFrame ChargeSprites::CurrentAnimationFrame() const {
-	return action::SpriteAnimationFrame(frame_name_);
 }
 
 PlayerCharacter::PlayerCharacter(ServerProxy* server)
@@ -158,8 +99,6 @@ PlayerCharacter::PlayerCharacter(ServerProxy* server)
     player_.Select("warpin");
     player_.Refresh();
     state_ = AnimationState::WARPING;
-
-	initialize_charge_sprites();
 }
 
 math::Vector2D PlayerCharacter::BulletOffsetForState() const {
@@ -219,13 +158,6 @@ void PlayerCharacter::Shoot() {
 		shoot_charge_ticks_ = 0;
 	}
 		
-}
-
-const std::vector<ChargeSprites>& PlayerCharacter::charge_sprites() const {
-	auto charge_level = ChargeLevel(shoot_charge_ticks_);
-	auto ticks_in_level = shoot_charge_ticks_ - kBusterLevelChargeCount[charge_level];
-	const auto& charge_level_animation = k_charge_sprites[charge_level];
-	return charge_level_animation[ticks_in_level % charge_level_animation.size()];
 }
 
 void PlayerCharacter::Move() {

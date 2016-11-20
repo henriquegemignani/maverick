@@ -2,16 +2,19 @@
 #include "frontend/nativebuilders/objectviewer.h"
 
 #include "backend/playercharacter.h"
+#include "backend/gameconstants.h"
 
 #include <ugdk/action/scene.h>
 #include <ugdk/graphic/canvas.h>
-#include <ugdk/graphic/module.h>
-#include <ugdk/graphic/primitive.h>
 #include <ugdk/graphic/textureatlas.h>
 #include <ugdk/graphic/primitivesetup.h>
 #include <ugdk/resource/module.h>
-#include <ugdk/ui/drawable/texturedrectangle.h>
 #include <ugdk/graphic/immediate.h>
+
+#include "backend/ugdktiledfileloader.h"
+#include "libjson.h"
+#include "tiled-reader/exceptions.h"
+
 
 namespace frontend {
   
@@ -19,11 +22,54 @@ using namespace ugdk;
 
 namespace {
 
+class ChargeSprites : public backend::AtlasObject {
+public:
+    ChargeSprites(const std::string& animations_name, const ugdk::math::Vector2D& position, const std::string& frame_name)
+        : AtlasObject(animations_name, position)
+        , frame_name_(frame_name) {
+    }
+
+    action::SpriteAnimationFrame CurrentAnimationFrame() const override {
+        return action::SpriteAnimationFrame(frame_name_);
+    }
+
+private:
+    std::string frame_name_;
+};
+
 graphic::TextureAtlas* x_atlas = nullptr;
 graphic::TextureAtlas* dust_atlas = nullptr;
 graphic::TextureAtlas* dash_dust_atlas = nullptr;
 graphic::TextureAtlas* buster_atlas = nullptr;
 graphic::TextureAtlas* buster_charge_atlas = nullptr;
+
+std::array<std::vector<std::vector<ChargeSprites>>, 5> charge_sprites;
+
+
+void initialize_charge_sprites() {
+    auto loader = backend::UgdkTiledFileLoader();
+
+    auto contents = json_string(loader.GetContents(loader.OpenFile("x1-charge.json")).c_str());
+    if (!libjson::is_valid(contents))
+        throw tiled::BaseException("Invalid json: x1-charge.json\n");
+
+    auto json_root = libjson::parse(contents);
+
+    charge_sprites[0].clear();
+    charge_sprites[0].emplace_back();
+
+    charge_sprites[1].clear();
+
+    auto lv1 = json_root["lv1"];
+    for (auto animation_frame : lv1) {
+        charge_sprites[1].emplace_back();
+        for (auto effect : animation_frame["effects"]) {
+            math::Vector2D position(effect["position"].at(0).as_float(), effect["position"].at(1).as_float());
+            charge_sprites[1].back().emplace_back("animations/buster-charge.json", position, effect["name"].as_string());
+        }
+    }
+}
+
 
 void populate_atlas() {
 	if (x_atlas) return;
@@ -33,6 +79,7 @@ void populate_atlas() {
 	dash_dust_atlas = resource::GetTextureAtlasFromFile("spritesheets/dash_dust");
 	buster_atlas = resource::GetTextureAtlasFromFile("spritesheets/buster");
 	buster_charge_atlas = resource::GetTextureAtlasFromFile("spritesheets/buster-charge");
+    initialize_charge_sprites();
 }
 
 std::tuple<graphic::TextureAtlas*, math::Vector2D>
@@ -57,7 +104,6 @@ get_data_for(const std::string& animtions_name) {
 	throw std::invalid_argument("unknown animations name");
 }
 
-
 template<class Callable>
 void RenderAnimatedObject(ugdk::graphic::Canvas& canvas, const backend::AtlasObject& object,
 						  Callable post_render) {
@@ -76,16 +122,20 @@ void RenderAnimatedObject(ugdk::graphic::Canvas& canvas, const backend::AtlasObj
 	canvas.PushAndCompose(math::Geometry(std::get<1>(data)));
 	graphic::immediate::Rectangle(canvas, math::Vector2D(), atlas, frame);
 	canvas.PopGeometry();
-
-	post_render();
+	post_render(canvas);
 	canvas.PopGeometry();
 }
 
 void RenderPlayer(ugdk::graphic::Canvas& canvas, const backend::PlayerCharacter& player) {
-	auto x = player.charge_sprites();
-	RenderAnimatedObject(canvas, player, [&] {
-		for (const auto& child : player.charge_sprites())
-			RenderAnimatedObject(canvas, child, [] {});
+    auto shoot_charge_ticks = player.shoot_charge_ticks();
+    auto charge_level = backend::PlayerCharacter::ChargeLevel(shoot_charge_ticks);
+    auto ticks_in_level = shoot_charge_ticks - backend::constants::kBusterLevelChargeCount[charge_level];
+    const auto& charge_level_animation = charge_sprites[charge_level];
+    const auto& charge_sprites = charge_level_animation[ticks_in_level % charge_level_animation.size()];
+
+	RenderAnimatedObject(canvas, player, [charge_sprites](graphic::Canvas& canvas) {
+		for (const auto& child : charge_sprites)
+			RenderAnimatedObject(canvas, child, [](graphic::Canvas& canvas) {});
 	});
 }
 
@@ -102,10 +152,10 @@ void ObjectViewer::Render(ugdk::graphic::Canvas & canvas)
 	RenderPlayer(canvas, server_->player_character());
 
 	for (const auto& obj : server_->effects()) {
-		RenderAnimatedObject(canvas, obj, [] {});
+		RenderAnimatedObject(canvas, obj, [](graphic::Canvas& canvas) {});
 	}
 	for (const auto& obj : server_->bullets()) {
-		RenderAnimatedObject(canvas, obj, [] {});
+		RenderAnimatedObject(canvas, obj, [](graphic::Canvas& canvas) {});
 	}
 }
 
