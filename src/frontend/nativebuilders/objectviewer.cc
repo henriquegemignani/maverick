@@ -11,6 +11,7 @@
 #include <ugdk/graphic/primitivesetup.h>
 #include <ugdk/resource/module.h>
 #include <ugdk/ui/drawable/texturedrectangle.h>
+#include <ugdk/graphic/immediate.h>
 
 namespace frontend {
   
@@ -59,21 +60,13 @@ get_data_for(const std::string& animtions_name) {
 
 template<class Callable>
 void RenderAnimatedObject(ugdk::graphic::Canvas& canvas, const backend::AtlasObject& object,
-						  ugdk::graphic::Primitive& primitive, Callable post_render) {
+						  Callable post_render) {
 	auto data = get_data_for(object.animations_name());
 
 	auto atlas = std::get<0>(data);
 	auto&& frame = object.CurrentAnimationFrame();
 	if (!frame.effect().visible())
 		return;
-	auto&& piece = atlas->PieceAt(frame.atlas_frame_name());
-	//primitive_.set_visualeffect(frame.effect());
-
-	graphic::VertexDataManipulation::SetUsingSpriteFrameInformation(*primitive.vertexdata(), math::Vector2D(), frame, piece);
-
-	// Send the texture to the GPU
-	auto sprite_unit = ugdk::graphic::manager()->ReserveTextureUnit(atlas->texture());
-	canvas.SendUniform("drawable_texture", sprite_unit);
 
 	canvas.PushAndCompose(
 		math::Geometry(
@@ -81,22 +74,27 @@ void RenderAnimatedObject(ugdk::graphic::Canvas& canvas, const backend::AtlasObj
 			math::Vector2D(object.direction(), 1)
 		));
 	canvas.PushAndCompose(math::Geometry(std::get<1>(data)));
-	graphic::PrimitiveSetup::Sprite::Render(primitive, canvas);
+	graphic::immediate::Rectangle(canvas, math::Vector2D(), atlas, frame);
 	canvas.PopGeometry();
 
 	post_render();
-
 	canvas.PopGeometry();
+}
+
+void RenderPlayer(ugdk::graphic::Canvas& canvas, const backend::PlayerCharacter& player) {
+	auto x = player.charge_sprites();
+	RenderAnimatedObject(canvas, player, [&] {
+		for (const auto& child : player.charge_sprites())
+			RenderAnimatedObject(canvas, child, [] {});
+	});
 }
 
 }
 
 ObjectViewer::ObjectViewer(backend::ServerProxy* server)
     : server_(server)
-    , primitive_(nullptr, nullptr)
 {
 	populate_atlas();
-	primitive_.set_vertexdata(graphic::CreateVertexDataWithSpecification(graphic::PrimitiveSetup::Sprite::vertexdata_specification));
 }
 
 void ObjectViewer::Render(ugdk::graphic::Canvas & canvas)
@@ -104,19 +102,11 @@ void ObjectViewer::Render(ugdk::graphic::Canvas & canvas)
 	RenderPlayer(canvas, server_->player_character());
 
 	for (const auto& obj : server_->effects()) {
-		RenderAnimatedObject(canvas, obj, primitive_, [] {});
+		RenderAnimatedObject(canvas, obj, [] {});
 	}
 	for (const auto& obj : server_->bullets()) {
-		RenderAnimatedObject(canvas, obj, primitive_, [] {});
+		RenderAnimatedObject(canvas, obj, [] {});
 	}
-}
-
-void ObjectViewer::RenderPlayer(ugdk::graphic::Canvas& canvas, const backend::PlayerCharacter& player) {
-	auto x = player.charge_sprites();
-	RenderAnimatedObject(canvas, player, primitive_, [&] {
-		for (const auto& child : player.charge_sprites())
-			RenderAnimatedObject(canvas, child, primitive_, [] {});
-	});
 }
 
 } // namespace frontend

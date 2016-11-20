@@ -16,10 +16,7 @@ public:
     void Render(ugdk::graphic::Canvas&);
 
 private:
-	void RenderPlayer(ugdk::graphic::Canvas&, const backend::PlayerCharacter&);
-
     backend::ServerProxy* server_;
-    ugdk::graphic::Primitive primitive_;
 };
 
 } // namespace frontend
